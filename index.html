@@ -1,878 +1,1170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Planner</title>
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
   :root {
-    --bg: #f9f9f8;
-    --surface: #ffffff;
-    --border: #e5e5e3;
-    --text: #1a1a1a;
-    --muted: #888884;
-    --accent: #2563eb;
-    --accent-light: #eff4ff;
-    --work: #2563eb;
-    --personal: #16a34a;
-    --health: #d97706;
-    --others: #7c3aed;
-    --holiday: #db2777;
-    --danger: #dc2626;
-    --success: #16a34a;
-    --radius: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.07);
+    --work: #4F6BED;
+    --personal: #2EAF7D;
+    --health: #E8724A;
+    --others: #9B6DD6;
+    --holiday: #C0A050;
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --border: #E8E9ED;
+    --text: #1A1D23;
+    --text-secondary: #6B7280;
+    --sidebar-w: 220px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
-  a { color: var(--accent); text-decoration: none; }
 
-  /* Layout */
-  .app { display: flex; min-height: 100vh; }
-  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; }
-  .main { margin-left: 220px; padding: 32px; flex: 1; max-width: 1100px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; font-size: 14px; }
 
-  /* Sidebar */
-  .sidebar-logo { padding: 0 20px 24px; font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; border-bottom: 1px solid var(--border); }
-  .sidebar-logo span { color: var(--accent); }
-  .nav { margin-top: 16px; flex: 1; }
-  .nav-item { display: block; padding: 9px 20px; color: var(--muted); font-size: 13.5px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
-  .nav-item:hover { color: var(--text); background: var(--bg); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-light); font-weight: 500; }
-  .sidebar-bottom { padding: 16px 20px; border-top: 1px solid var(--border); }
-  .sidebar-bottom .btn-sm { width: 100%; text-align: center; }
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; padding: 28px 0;
+  }
+  #sidebar .logo { padding: 0 24px 28px; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); border-bottom: 1px solid var(--border); }
+  #sidebar .logo span { font-weight: 300; color: var(--text-secondary); }
+  #sidebar nav { padding: 16px 12px; flex: 1; }
+  #sidebar nav a {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+    color: var(--text-secondary); text-decoration: none; font-size: 13.5px; font-weight: 500;
+    margin-bottom: 2px; transition: all 0.15s; cursor: pointer;
+  }
+  #sidebar nav a:hover { background: var(--bg); color: var(--text); }
+  #sidebar nav a.active { background: #EEF1FD; color: var(--work); }
+  #sidebar nav a svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-section { font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.6px; text-transform: uppercase; padding: 16px 12px 6px; }
 
-  /* Views */
-  .view { display: none; }
-  .view.active { display: block; }
+  /* MAIN */
+  #main { margin-left: var(--sidebar-w); flex: 1; padding: 36px 40px; max-width: 1200px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.4px; }
+  .page-sub { color: var(--text-secondary); font-size: 13px; margin-bottom: 28px; }
 
-  /* Page header */
-  .page-header { margin-bottom: 28px; }
-  .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
-  .page-header p { color: var(--muted); margin-top: 3px; font-size: 13px; }
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
 
-  /* Cards */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-  .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 14px; }
+  /* DASHBOARD */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .dash-grid .card { margin-bottom: 0; }
+  .dash-full { grid-column: 1 / -1; }
+  .today-date { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .today-day { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+  .stat-row { display: flex; gap: 20px; margin-top: 16px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .upcoming-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .upcoming-item:last-child { border-bottom: none; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot.work { background: var(--work); }
+  .dot.personal { background: var(--personal); }
+  .dot.health { background: var(--health); }
+  .dot.others { background: var(--others); }
+  .dot.holiday { background: var(--holiday); }
+  .upcoming-title { font-size: 13px; font-weight: 500; }
+  .upcoming-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .cat-bar { margin-bottom: 10px; }
+  .cat-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .cat-bar-track { background: var(--border); border-radius: 99px; height: 6px; }
+  .cat-bar-fill { height: 6px; border-radius: 99px; transition: width 0.4s; }
+  .overdue-banner { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #B91C1C; }
 
-  /* Grid */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  /* BADGE */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge.work { background: #EEF1FD; color: var(--work); }
+  .badge.personal { background: #E8F7F2; color: var(--personal); }
+  .badge.health { background: #FEF0EB; color: var(--health); }
+  .badge.others { background: #F3EEFB; color: var(--others); }
+  .badge.holiday { background: #FDF6E3; color: var(--holiday); }
+  .badge.high { background: #FEF2F2; color: #B91C1C; }
+  .badge.medium { background: #FFFBEB; color: #92400E; }
+  .badge.low { background: #F0FDF4; color: #166534; }
+  .badge.todo { background: #F3F4F6; color: #374151; }
+  .badge.inprogress { background: #EFF6FF; color: #1D4ED8; }
+  .badge.done { background: #F0FDF4; color: #166534; }
+  .badge.rolled { background: #FEF3C7; color: #92400E; }
 
-  /* Stat cards */
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
-  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-  .stat-value { font-size: 28px; font-weight: 600; margin-top: 4px; letter-spacing: -1px; }
-  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* Buttons */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #1d4ed8; }
-  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: var(--bg); }
-  .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
-  .btn-danger:hover { background: #fee2e2; }
-  .btn-sm { padding: 5px 11px; font-size: 12.5px; }
-  .btn-xs { padding: 3px 8px; font-size: 12px; border-radius: 5px; }
-
-  /* Tags / Badges */
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11.5px; font-weight: 500; }
-  .badge-work { background: #eff4ff; color: var(--work); }
-  .badge-personal { background: #f0fdf4; color: var(--personal); }
-  .badge-health { background: #fffbeb; color: var(--health); }
-  .badge-others { background: #f5f3ff; color: var(--others); }
-  .badge-holiday { background: #fdf2f8; color: var(--holiday); }
-  .badge-high { background: #fef2f2; color: #dc2626; }
-  .badge-medium { background: #fffbeb; color: #d97706; }
-  .badge-low { background: #f0fdf4; color: #16a34a; }
-  .badge-todo { background: #f3f4f6; color: #6b7280; }
-  .badge-inprogress { background: #eff4ff; color: #2563eb; }
-  .badge-done { background: #f0fdf4; color: #16a34a; }
-  .badge-overdue { background: #fef2f2; color: #dc2626; }
-
-  /* Dot indicator */
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-  .dot-work { background: var(--work); }
-  .dot-personal { background: var(--personal); }
-  .dot-health { background: var(--health); }
-  .dot-others { background: var(--others); }
-  .dot-holiday { background: var(--holiday); }
-
-  /* Form */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 12.5px; font-weight: 500; color: var(--muted); }
-  input, select, textarea { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; font-size: 13.5px; font-family: inherit; background: var(--surface); color: var(--text); transition: border 0.15s; width: 100%; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 72px; }
+  label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  input, select, textarea {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface);
+    transition: border 0.15s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--work); }
+  textarea { resize: vertical; min-height: 70px; }
+  .btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--work); color: white; }
+  .btn-primary:hover { background: #3D57D4; }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+  .btn-danger:hover { background: #FECACA; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
 
-  /* Table */
+  /* TABS */
+  .tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+  .tab { padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; border: none; background: none; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* TABLE */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
+  th { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--bg); }
-  .entry-title { font-weight: 500; }
-  .entry-notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .task-title-cell { font-weight: 500; }
+  .task-rolled { font-size: 11px; color: #92400E; margin-top: 2px; }
+  .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-row input { flex: 1; min-width: 180px; }
+  .filter-row select { min-width: 120px; }
 
-  /* Filters */
-  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
-  .filters input, .filters select { width: auto; padding: 7px 11px; font-size: 13px; }
-  .filters input { min-width: 200px; }
-
-  /* Calendar */
+  /* CALENDAR */
   .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .cal-header h2 { font-size: 16px; font-weight: 600; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .cal-day-name { background: var(--bg); padding: 8px; text-align: center; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
-  .cal-day { background: var(--surface); padding: 8px; min-height: 80px; vertical-align: top; }
-  .cal-day.empty { background: var(--bg); }
-  .cal-day.today { background: var(--accent-light); }
-  .cal-day-num { font-size: 12.5px; font-weight: 500; margin-bottom: 4px; color: var(--muted); }
-  .cal-day.today .cal-day-num { color: var(--accent); font-weight: 700; }
-  .cal-event { font-size: 11px; padding: 2px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-  .cal-event-work { background: #eff4ff; color: var(--work); }
-  .cal-event-personal { background: #f0fdf4; color: var(--personal); }
-  .cal-event-health { background: #fffbeb; color: var(--health); }
-  .cal-event-others { background: #f5f3ff; color: var(--others); }
-  .cal-event-holiday { background: #fdf2f8; color: var(--holiday); }
+  .cal-nav { display: flex; align-items: center; gap: 12px; }
+  .cal-nav button { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; color: var(--text); }
+  .cal-nav button:hover { background: var(--bg); }
+  .cal-month-label { font-size: 16px; font-weight: 700; min-width: 140px; text-align: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .cal-day-header { background: var(--bg); text-align: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); padding: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .cal-cell { background: var(--surface); min-height: 90px; padding: 6px; vertical-align: top; }
+  .cal-cell.other-month { background: #FAFAFA; }
+  .cal-cell.today { background: #F0F3FF; }
+  .cal-date { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .cal-cell.today .cal-date { color: var(--work); }
+  .cal-event { font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; cursor: pointer; }
+  .cal-event.work { background: #EEF1FD; color: var(--work); }
+  .cal-event.personal { background: #E8F7F2; color: var(--personal); }
+  .cal-event.health { background: #FEF0EB; color: var(--health); }
+  .cal-event.others { background: #F3EEFB; color: var(--others); }
+  .cal-event.holiday { background: #FDF6E3; color: var(--holiday); }
+  .cal-event.task-dot { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); }
 
-  /* Progress bar */
-  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-
-  /* Today list */
-  .today-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .today-item:last-child { border-bottom: none; }
-  .today-item-text { flex: 1; }
-  .today-item-title { font-weight: 500; font-size: 13.5px; }
-  .today-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* Section spacing */
-  .section { margin-bottom: 24px; }
-
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border-radius: 10px; padding: 28px; width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
-  .modal-header h2 { font-size: 17px; font-weight: 600; }
-  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; padding: 2px 6px; }
-  .modal-close:hover { color: var(--text); }
-  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
-
-  /* Alert */
-  .alert { padding: 12px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; }
-  .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-  .alert-info { background: var(--accent-light); border: 1px solid #bfdbfe; color: #1e40af; }
-
-  /* Divider */
-  .divider { height: 1px; background: var(--border); margin: 20px 0; }
-
-  /* Empty state */
-  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
-  .empty-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
-  .empty-sub { font-size: 13px; }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; padding: 12px; }
-    .main { margin-left: 0; padding: 16px; }
-    .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
+  /* WEEK VIEW */
+  .week-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .week-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .week-day-header { background: var(--bg); text-align: center; padding: 10px 4px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); }
+  .week-day-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+  .week-day-num { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .week-day-num.today-num { color: var(--work); }
+  .week-time-col { background: var(--bg); border-right: 1px solid var(--border); }
+  .week-time-label { height: 48px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 4px 8px 0 0; font-size: 10px; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .week-cell { height: 48px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); position: relative; }
+  .week-event-block {
+    position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 4px;
+    font-size: 10px; font-weight: 600; overflow: hidden; cursor: pointer; z-index: 2;
   }
+  .week-event-block.work { background: #EEF1FD; color: var(--work); border-left: 3px solid var(--work); }
+  .week-event-block.personal { background: #E8F7F2; color: var(--personal); border-left: 3px solid var(--personal); }
+  .week-event-block.health { background: #FEF0EB; color: var(--health); border-left: 3px solid var(--health); }
+  .week-event-block.others { background: #F3EEFB; color: var(--others); border-left: 3px solid var(--others); }
+  .week-event-block.holiday { background: #FDF6E3; color: var(--holiday); border-left: 3px solid var(--holiday); }
+  .week-corner { background: var(--bg); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 
-  .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  /* GANTT */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt-table { min-width: 900px; }
+  .gantt-header-row { display: grid; gap: 0; }
+  .gantt-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); min-height: 44px; }
+  .gantt-label { width: 220px; flex-shrink: 0; padding: 8px 12px; font-size: 12px; font-weight: 500; }
+  .gantt-timeline { flex: 1; position: relative; height: 44px; }
+  .gantt-bar { position: absolute; height: 18px; top: 13px; border-radius: 4px; opacity: 0.85; }
+  .gantt-bar.work { background: var(--work); }
+  .gantt-bar.personal { background: var(--personal); }
+  .gantt-bar.health { background: var(--health); }
+  .gantt-bar.others { background: var(--others); }
+  .gantt-bar.holiday { background: var(--holiday); }
+  .gantt-startby { position: absolute; height: 18px; top: 13px; border-radius: 4px; opacity: 0.35; }
+  .gantt-startby.work { background: var(--work); }
+  .gantt-startby.personal { background: var(--personal); }
+  .gantt-startby.health { background: var(--health); }
+  .gantt-startby.others { background: var(--others); }
+  .gantt-date-header { display: flex; border-bottom: 1px solid var(--border); }
+  .gantt-date-label-spacer { width: 220px; flex-shrink: 0; }
+  .gantt-date-labels { flex: 1; display: flex; }
+  .gantt-date-tick { font-size: 10px; color: var(--text-secondary); text-align: center; border-left: 1px solid var(--border); padding: 4px 2px; }
+  .gantt-today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #EF4444; opacity: 0.6; z-index: 5; }
+  .gantt-controls { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .startby-tag { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* DATA PAGE */
+  .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .data-grid .card { margin-bottom: 0; }
+  .data-action { display: flex; flex-direction: column; gap: 10px; }
+  .data-action p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px; width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
+
+  /* TOOLTIP */
+  .tooltip { position: relative; }
+  .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1A1D23; color: white; font-size: 11px; padding: 4px 8px; border-radius: 5px; white-space: nowrap; z-index: 999; margin-bottom: 4px; }
+
+  .section-divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .lead-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info-text { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">My <span>Planner</span></div>
-    <nav class="nav">
-      <div class="nav-item active" onclick="showView('dashboard')">Dashboard</div>
-      <div class="nav-item" onclick="showView('entries')">All Entries</div>
-      <div class="nav-item" onclick="showView('calendar')">Calendar</div>
-      <div class="nav-item" onclick="showView('add')">Add Entry</div>
-      <div class="nav-item" onclick="showView('data')">Data & Backup</div>
-    </nav>
-    <div class="sidebar-bottom">
-      <button class="btn btn-primary btn-sm" onclick="showView('add')">+ New Entry</button>
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">My Planner <span>/ Life Dashboard</span></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a onclick="showPage('dashboard')" id="nav-dashboard" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Schedule</div>
+    <a onclick="showPage('calendar')" id="nav-calendar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendar
+    </a>
+    <a onclick="showPage('week')" id="nav-week">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="22"/></svg>
+      Week View
+    </a>
+    <div class="nav-section">Tasks & Planning</div>
+    <a onclick="showPage('tasks')" id="nav-tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Tasks
+    </a>
+    <a onclick="showPage('gantt')" id="nav-gantt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+      Gantt Timeline
+    </a>
+    <div class="nav-section">Add New</div>
+    <a onclick="openEventModal()" id="nav-addevent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add Event
+    </a>
+    <a onclick="openTaskModal()" id="nav-addtask">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Add Task
+    </a>
+    <div class="nav-section">Settings</div>
+    <a onclick="showPage('data')" id="nav-data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Data & Backup
+    </a>
+  </nav>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-title" id="dash-greeting">Good morning</div>
+    <div class="page-sub" id="dash-date">Loading...</div>
+    <div id="overdue-banner"></div>
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-title">Today</div>
+        <div id="dash-today"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Upcoming (7 days)</div>
+        <div id="dash-upcoming"></div>
+      </div>
+      <div class="card dash-full">
+        <div class="card-title">Task Distribution by Category</div>
+        <div id="dash-cats"></div>
+      </div>
     </div>
-  </aside>
+  </div>
 
-  <!-- Main -->
-  <main class="main">
-
-    <!-- DASHBOARD -->
-    <div id="view-dashboard" class="view active">
-      <div class="page-header">
-        <h1 id="dash-greeting">Good morning</h1>
-        <p id="dash-date"></p>
-      </div>
-
-      <div class="grid-4 section" id="dash-stats"></div>
-
-      <div class="grid-2 section">
-        <div class="card">
-          <div class="card-title">Today</div>
-          <div id="dash-today"></div>
+  <!-- CALENDAR -->
+  <div id="page-calendar" class="page">
+    <div class="page-title">Monthly Calendar</div>
+    <div class="page-sub">Events and holidays overview</div>
+    <div class="card">
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button onclick="calPrev()">&#8592;</button>
+          <div class="cal-month-label" id="cal-label"></div>
+          <button onclick="calNext()">&#8594;</button>
         </div>
-        <div class="card">
-          <div class="card-title">Coming up this week</div>
-          <div id="dash-week"></div>
-        </div>
+        <button class="btn btn-secondary btn-sm" onclick="calToday()">Today</button>
       </div>
-
-      <div class="card section">
-        <div class="card-title">Category breakdown</div>
-        <div id="dash-breakdown"></div>
-        <div class="legend">
-          <div class="legend-item"><span class="color-dot" style="background:var(--work)"></span> Work</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--personal)"></span> Personal</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--health)"></span> Health</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--others)"></span> Others</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--holiday)"></span> Holiday</div>
-        </div>
-      </div>
-
-      <div id="dash-overdue-wrap" class="section"></div>
+      <div class="cal-grid" id="cal-grid"></div>
     </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);padding:0 4px;">
+      <span><span class="dot work" style="display:inline-block;margin-right:4px;"></span>Work</span>
+      <span><span class="dot personal" style="display:inline-block;margin-right:4px;"></span>Personal</span>
+      <span><span class="dot health" style="display:inline-block;margin-right:4px;"></span>Health</span>
+      <span><span class="dot others" style="display:inline-block;margin-right:4px;"></span>Others</span>
+      <span><span class="dot holiday" style="display:inline-block;margin-right:4px;"></span>Holiday</span>
+    </div>
+  </div>
 
-    <!-- ALL ENTRIES -->
-    <div id="view-entries" class="view">
-      <div class="page-header">
-        <h1>All Entries</h1>
-        <p>Browse, search, and manage everything in your planner.</p>
+  <!-- WEEK VIEW -->
+  <div id="page-week" class="page">
+    <div class="page-title">Week View</div>
+    <div class="page-sub">Scheduled events with time blocks</div>
+    <div class="card">
+      <div class="week-header">
+        <div class="cal-nav">
+          <button onclick="weekPrev()">&#8592;</button>
+          <div class="cal-month-label" id="week-label"></div>
+          <button onclick="weekNext()">&#8594;</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="weekToday()">This Week</button>
       </div>
-      <div class="filters">
-        <input type="text" id="filter-search" placeholder="Search entries..." oninput="renderEntries()">
-        <select id="filter-cat" onchange="renderEntries()">
-          <option value="">All categories</option>
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="page-tasks" class="page">
+    <div class="page-title">Tasks</div>
+    <div class="page-sub">Your running to-do list — rolled over tasks are flagged with their original due date</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="tabs">
+          <button class="tab active" onclick="filterTaskTab('all',this)">All</button>
+          <button class="tab" onclick="filterTaskTab('todo',this)">To Do</button>
+          <button class="tab" onclick="filterTaskTab('inprogress',this)">In Progress</button>
+          <button class="tab" onclick="filterTaskTab('done',this)">Done</button>
+          <button class="tab" onclick="filterTaskTab('rolled',this)">Rolled Over</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add Task</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" placeholder="Search tasks..." id="task-search" oninput="renderTasks()">
+        <select id="task-filter-cat" onchange="renderTasks()">
+          <option value="">All Categories</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Health">Health</option>
+          <option value="Others">Others</option>
+        </select>
+        <select id="task-filter-priority" onchange="renderTasks()">
+          <option value="">All Priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="rolloverTasks()">Check Rollovers</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="task-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GANTT -->
+  <div id="page-gantt" class="page">
+    <div class="page-title">Gantt Timeline</div>
+    <div class="page-sub">Tasks plotted across time — lighter shade shows your lead time (start-by window)</div>
+    <div class="card">
+      <div class="gantt-controls">
+        <button class="btn btn-secondary btn-sm" onclick="ganttPrev()">&#8592; Earlier</button>
+        <span id="gantt-range-label" style="font-size:13px;font-weight:600;min-width:200px;text-align:center;"></span>
+        <button class="btn btn-secondary btn-sm" onclick="ganttNext()">Later &#8594;</button>
+        <button class="btn btn-secondary btn-sm" onclick="ganttToday()">Today</button>
+        <select id="gantt-filter-cat" onchange="renderGantt()" style="min-width:130px;">
+          <option value="">All Categories</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Health">Health</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
+      <div class="gantt-wrap">
+        <div class="gantt-table" id="gantt-table"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);padding:4px;">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:10px;border-radius:3px;background:var(--work);display:inline-block;"></span>Work</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:10px;border-radius:3px;background:var(--personal);display:inline-block;"></span>Personal</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:10px;border-radius:3px;background:var(--health);display:inline-block;"></span>Health</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:10px;border-radius:3px;background:var(--others);display:inline-block;"></span>Others</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:10px;border-radius:3px;background:var(--work);opacity:0.35;display:inline-block;"></span>Lead time (start-by window)</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:2px;height:14px;background:#EF4444;display:inline-block;"></span>Today</span>
+    </div>
+  </div>
+
+  <!-- DATA -->
+  <div id="page-data" class="page">
+    <div class="page-title">Data & Backup</div>
+    <div class="page-sub">Export, import, and manage your planner data</div>
+    <div class="data-grid">
+      <div class="card">
+        <div class="card-title">Export Data</div>
+        <div class="data-action">
+          <p>Download all your tasks and events as a JSON file. Use this to back up your data or transfer it to another device.</p>
+          <button class="btn btn-primary" onclick="exportData()">Download JSON Backup</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Import Data</div>
+        <div class="data-action">
+          <p>Import a previously exported JSON file. Your existing data will be merged with the imported data — no duplicates.</p>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Choose JSON File</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Data Summary</div>
+        <div id="data-summary"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Danger Zone</div>
+        <div class="data-action">
+          <p>Permanently delete all your tasks and events. This cannot be undone. Your Singapore public holidays will remain.</p>
+          <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-title" id="event-modal-title">Add Event</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Event Title</label>
+        <input type="text" id="ev-title" placeholder="e.g. Team standup, Doctor appointment">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="ev-cat">
           <option value="Work">Work</option>
           <option value="Personal">Personal</option>
           <option value="Health">Health</option>
           <option value="Others">Others</option>
           <option value="Holiday">Holiday</option>
         </select>
-        <select id="filter-status" onchange="renderEntries()">
-          <option value="">All statuses</option>
-          <option value="To Do">To Do</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Done">Done</option>
+      </div>
+      <div class="form-group">
+        <label>Work Stream / Label (optional)</label>
+        <input type="text" id="ev-stream" placeholder="e.g. Project Alpha">
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="ev-date">
+      </div>
+      <div class="form-group">
+        <label>End Date (for multi-day events)</label>
+        <input type="date" id="ev-enddate">
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="ev-start">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="time" id="ev-end">
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea id="ev-notes" placeholder="Any details..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-title" id="task-modal-title">Add Task</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Task Title</label>
+        <input type="text" id="tk-title" placeholder="e.g. Prepare quarterly report">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="tk-cat">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Health">Health</option>
+          <option value="Others">Others</option>
         </select>
-        <select id="filter-priority" onchange="renderEntries()">
-          <option value="">All priorities</option>
+      </div>
+      <div class="form-group">
+        <label>Work Stream / Label (optional)</label>
+        <input type="text" id="tk-stream" placeholder="e.g. Project Alpha">
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="tk-priority">
           <option value="High">High</option>
-          <option value="Medium">Medium</option>
+          <option value="Medium" selected>Medium</option>
           <option value="Low">Low</option>
         </select>
       </div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Start</th>
-                <th>Due</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="entries-tbody"></tbody>
-          </table>
-        </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="tk-status">
+          <option value="todo">To Do</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
       </div>
-    </div>
-
-    <!-- CALENDAR -->
-    <div id="view-calendar" class="view">
-      <div class="page-header">
-        <h1>Calendar</h1>
-        <p>Monthly overview of all your entries and public holidays.</p>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="tk-start">
       </div>
-      <div class="card">
-        <div class="cal-header">
-          <button class="btn btn-secondary btn-sm" onclick="calPrev()">&#8592; Prev</button>
-          <h2 id="cal-title"></h2>
-          <button class="btn btn-secondary btn-sm" onclick="calNext()">Next &#8594;</button>
-        </div>
-        <div class="cal-grid" id="cal-grid"></div>
-        <div class="legend" style="margin-top:16px;">
-          <div class="legend-item"><span class="color-dot" style="background:var(--work)"></span> Work</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--personal)"></span> Personal</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--health)"></span> Health</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--others)"></span> Others</div>
-          <div class="legend-item"><span class="color-dot" style="background:var(--holiday)"></span> Holiday</div>
-        </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="tk-due">
       </div>
-    </div>
-
-    <!-- ADD / EDIT ENTRY -->
-    <div id="view-add" class="view">
-      <div class="page-header">
-        <h1 id="form-title">Add Entry</h1>
-        <p>Fill in the details below. Only the title and category are required.</p>
-      </div>
-      <div class="card" style="max-width:620px;">
-        <form id="entry-form" onsubmit="saveEntry(event)">
-          <input type="hidden" id="edit-id">
-          <div class="form-grid">
-            <div class="form-group full">
-              <label>Title</label>
-              <input type="text" id="f-title" placeholder="What is this entry?" required>
-            </div>
-            <div class="form-group">
-              <label>Category</label>
-              <select id="f-category" required>
-                <option value="">Select...</option>
-                <option value="Work">Work</option>
-                <option value="Personal">Personal</option>
-                <option value="Health">Health</option>
-                <option value="Others">Others</option>
-                <option value="Holiday">Holiday</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Stream / Sub-label <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-              <input type="text" id="f-stream" placeholder="e.g. Project Alpha, Gym">
-            </div>
-            <div class="form-group">
-              <label>Priority</label>
-              <select id="f-priority">
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Status</label>
-              <select id="f-status">
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Done">Done</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Start Date</label>
-              <input type="date" id="f-start">
-            </div>
-            <div class="form-group">
-              <label>Due Date</label>
-              <input type="date" id="f-due">
-            </div>
-            <div class="form-group full">
-              <label>Notes <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-              <textarea id="f-notes" placeholder="Any additional context..."></textarea>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
-            <button type="submit" class="btn btn-primary">Save Entry</button>
-            <button type="button" class="btn btn-secondary" onclick="resetForm();showView('entries')">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- DATA & BACKUP -->
-    <div id="view-data" class="view">
-      <div class="page-header">
-        <h1>Data & Backup</h1>
-        <p>Export, import, or clear your planner data.</p>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title">Export</div>
-          <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Download all your entries as a JSON file. Use this to back up your data or transfer it to another device.</p>
-          <button class="btn btn-secondary" onclick="exportData()">Download JSON backup</button>
-        </div>
-        <div class="card">
-          <div class="card-title">Import</div>
-          <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Import a previously exported JSON file. Entries will be merged with your existing data — no duplicates.</p>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON file</button>
-        </div>
-      </div>
-      <div class="card" style="margin-top:16px;">
-        <div class="card-title">Danger zone</div>
-        <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">This will permanently delete all entries. This cannot be undone. Export a backup first.</p>
-        <button class="btn btn-danger" onclick="clearAll()">Clear all data</button>
-      </div>
-      <div class="card" style="margin-top:16px;">
-        <div class="card-title">About</div>
-        <p style="color:var(--muted);font-size:13px;">Data is stored in your browser's localStorage. Use Export/Import to sync across devices. Singapore public holidays for 2024–2026 are pre-loaded and cannot be deleted.</p>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<!-- Edit Modal -->
-<div class="modal-overlay" id="edit-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Edit Entry</h2>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <form id="edit-form" onsubmit="saveEdit(event)">
-      <input type="hidden" id="m-id">
-      <div class="form-grid">
-        <div class="form-group full">
-          <label>Title</label>
-          <input type="text" id="m-title" required>
-        </div>
-        <div class="form-group">
-          <label>Category</label>
-          <select id="m-category" required>
-            <option value="Work">Work</option>
-            <option value="Personal">Personal</option>
-            <option value="Health">Health</option>
-            <option value="Others">Others</option>
-            <option value="Holiday">Holiday</option>
+      <div class="form-group full">
+        <label>Lead Time (how far in advance to start)</label>
+        <div class="lead-time-row">
+          <input type="number" id="tk-lead-val" placeholder="e.g. 3" min="0">
+          <select id="tk-lead-unit">
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Stream / Sub-label</label>
-          <input type="text" id="m-stream">
-        </div>
-        <div class="form-group">
-          <label>Priority</label>
-          <select id="m-priority">
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="m-status">
-            <option value="To Do">To Do</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Done">Done</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Start Date</label>
-          <input type="date" id="m-start">
-        </div>
-        <div class="form-group">
-          <label>Due Date</label>
-          <input type="date" id="m-due">
-        </div>
-        <div class="form-group full">
-          <label>Notes</label>
-          <textarea id="m-notes"></textarea>
-        </div>
+        <div class="info-text">If set, a "Start By" marker will appear on the Gantt and an auto-task will be added to your to-do list.</div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save changes</button>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea id="tk-notes" placeholder="Any details, context, or links..."></textarea>
       </div>
-    </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ─── Singapore Public Holidays 2024–2026 ───────────────────────────────────
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
 const SG_HOLIDAYS = [
   // 2024
-  {date:"2024-01-01",title:"New Year's Day"},
-  {date:"2024-02-10",title:"Chinese New Year"},
-  {date:"2024-02-11",title:"Chinese New Year (Day 2)"},
-  {date:"2024-02-12",title:"Chinese New Year (Day 2 observed)"},
-  {date:"2024-03-29",title:"Good Friday"},
-  {date:"2024-04-10",title:"Hari Raya Puasa"},
-  {date:"2024-05-01",title:"Labour Day"},
-  {date:"2024-05-23",title:"Vesak Day"},
-  {date:"2024-06-17",title:"Hari Raya Haji"},
-  {date:"2024-08-09",title:"National Day"},
-  {date:"2024-10-31",title:"Deepavali"},
-  {date:"2024-12-25",title:"Christmas Day"},
+  {id:'h-240101',title:"New Year's Day",date:'2024-01-01',category:'Holiday',type:'event'},
+  {id:'h-240210',title:"Chinese New Year",date:'2024-02-10',category:'Holiday',type:'event'},
+  {id:'h-240211',title:"Chinese New Year (Day 2)",date:'2024-02-11',category:'Holiday',type:'event'},
+  {id:'h-240329',title:"Good Friday",date:'2024-03-29',category:'Holiday',type:'event'},
+  {id:'h-240410',title:"Hari Raya Puasa",date:'2024-04-10',category:'Holiday',type:'event'},
+  {id:'h-240501',title:"Labour Day",date:'2024-05-01',category:'Holiday',type:'event'},
+  {id:'h-240522',title:"Vesak Day",date:'2024-05-22',category:'Holiday',type:'event'},
+  {id:'h-240617',title:"Hari Raya Haji",date:'2024-06-17',category:'Holiday',type:'event'},
+  {id:'h-240809',title:"National Day",date:'2024-08-09',category:'Holiday',type:'event'},
+  {id:'h-241031',title:"Deepavali",date:'2024-10-31',category:'Holiday',type:'event'},
+  {id:'h-241225',title:"Christmas Day",date:'2024-12-25',category:'Holiday',type:'event'},
   // 2025
-  {date:"2025-01-01",title:"New Year's Day"},
-  {date:"2025-01-29",title:"Chinese New Year"},
-  {date:"2025-01-30",title:"Chinese New Year (Day 2)"},
-  {date:"2025-03-31",title:"Hari Raya Puasa"},
-  {date:"2025-04-18",title:"Good Friday"},
-  {date:"2025-05-01",title:"Labour Day"},
-  {date:"2025-05-12",title:"Vesak Day"},
-  {date:"2025-06-07",title:"Hari Raya Haji"},
-  {date:"2025-08-09",title:"National Day"},
-  {date:"2025-10-20",title:"Deepavali"},
-  {date:"2025-12-25",title:"Christmas Day"},
+  {id:'h-250101',title:"New Year's Day",date:'2025-01-01',category:'Holiday',type:'event'},
+  {id:'h-250129',title:"Chinese New Year",date:'2025-01-29',category:'Holiday',type:'event'},
+  {id:'h-250130',title:"Chinese New Year (Day 2)",date:'2025-01-30',category:'Holiday',type:'event'},
+  {id:'h-250331',title:"Hari Raya Puasa",date:'2025-03-31',category:'Holiday',type:'event'},
+  {id:'h-250418',title:"Good Friday",date:'2025-04-18',category:'Holiday',type:'event'},
+  {id:'h-250501',title:"Labour Day",date:'2025-05-01',category:'Holiday',type:'event'},
+  {id:'h-250512',title:"Vesak Day",date:'2025-05-12',category:'Holiday',type:'event'},
+  {id:'h-250607',title:"Hari Raya Haji",date:'2025-06-07',category:'Holiday',type:'event'},
+  {id:'h-250809',title:"National Day",date:'2025-08-09',category:'Holiday',type:'event'},
+  {id:'h-251020',title:"Deepavali",date:'2025-10-20',category:'Holiday',type:'event'},
+  {id:'h-251225',title:"Christmas Day",date:'2025-12-25',category:'Holiday',type:'event'},
   // 2026
-  {date:"2026-01-01",title:"New Year's Day"},
-  {date:"2026-02-17",title:"Chinese New Year"},
-  {date:"2026-02-18",title:"Chinese New Year (Day 2)"},
-  {date:"2026-03-20",title:"Hari Raya Puasa"},
-  {date:"2026-04-03",title:"Good Friday"},
-  {date:"2026-05-01",title:"Labour Day"},
-  {date:"2026-05-31",title:"Vesak Day"},
-  {date:"2026-05-27",title:"Hari Raya Haji"},
-  {date:"2026-08-09",title:"National Day"},
-  {date:"2026-11-08",title:"Deepavali"},
-  {date:"2026-12-25",title:"Christmas Day"},
+  {id:'h-260101',title:"New Year's Day",date:'2026-01-01',category:'Holiday',type:'event'},
+  {id:'h-260217',title:"Chinese New Year",date:'2026-02-17',category:'Holiday',type:'event'},
+  {id:'h-260218',title:"Chinese New Year (Day 2)",date:'2026-02-18',category:'Holiday',type:'event'},
+  {id:'h-260320',title:"Hari Raya Puasa",date:'2026-03-20',category:'Holiday',type:'event'},
+  {id:'h-260403',title:"Good Friday",date:'2026-04-03',category:'Holiday',type:'event'},
+  {id:'h-260501',title:"Labour Day",date:'2026-05-01',category:'Holiday',type:'event'},
+  {id:'h-260531',title:"Vesak Day",date:'2026-05-31',category:'Holiday',type:'event'},
+  {id:'h-260527',title:"Hari Raya Haji",date:'2026-05-27',category:'Holiday',type:'event'},
+  {id:'h-260810',title:"National Day",date:'2026-08-10',category:'Holiday',type:'event'},
+  {id:'h-261109',title:"Deepavali",date:'2026-11-09',category:'Holiday',type:'event'},
+  {id:'h-261225',title:"Christmas Day",date:'2026-12-25',category:'Holiday',type:'event'},
 ];
 
-// ─── Data Layer ────────────────────────────────────────────────────────────
-function loadEntries() {
-  try { return JSON.parse(localStorage.getItem('planner_entries') || '[]'); } catch { return []; }
+function loadData() {
+  const saved = localStorage.getItem('planner_events');
+  return saved ? JSON.parse(saved) : [];
 }
-function saveEntries(arr) {
-  localStorage.setItem('planner_entries', JSON.stringify(arr));
+function loadTasks() {
+  const saved = localStorage.getItem('planner_tasks');
+  return saved ? JSON.parse(saved) : [];
 }
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+function saveData(data) { localStorage.setItem('planner_events', JSON.stringify(data)); }
+function saveTasks(data) { localStorage.setItem('planner_tasks', JSON.stringify(data)); }
+function uid() { return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2,6); }
 
-// ─── Navigation ───────────────────────────────────────────────────────────
-function showView(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  const items = document.querySelectorAll('.nav-item');
-  const labels = {dashboard:0, entries:1, calendar:2, add:3, data:4};
-  if (labels[name] !== undefined) items[labels[name]].classList.add('active');
+// ─── NAVIGATION ─────────────────────────────────────────────────────────────
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
   if (name === 'dashboard') renderDashboard();
-  if (name === 'entries') renderEntries();
   if (name === 'calendar') renderCalendar();
-  if (name === 'add') { resetForm(); document.getElementById('form-title').textContent = 'Add Entry'; }
+  if (name === 'week') renderWeek();
+  if (name === 'tasks') renderTasks();
+  if (name === 'gantt') renderGantt();
+  if (name === 'data') renderDataSummary();
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
-function fmtDate(d) {
-  if (!d) return '—';
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
-function today() { return new Date().toISOString().split('T')[0]; }
-function catClass(c) { return (c||'others').toLowerCase().replace(' ',''); }
-function statusClass(s) {
-  if (!s) return 'todo';
-  if (s === 'In Progress') return 'inprogress';
-  if (s === 'Done') return 'done';
-  return 'todo';
-}
-function isOverdue(entry) {
-  return entry.due && entry.due < today() && entry.status !== 'Done';
-}
-function allEntries() {
-  const user = loadEntries();
-  const holidays = SG_HOLIDAYS.map(h => ({
-    id: 'ph_' + h.date,
-    title: h.title,
-    category: 'Holiday',
-    priority: '',
-    status: '',
-    start: h.date,
-    due: h.date,
-    notes: 'Singapore Public Holiday',
-    stream: '',
-    isHoliday: true
-  }));
-  return [...user, ...holidays];
-}
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-// ─── Dashboard ────────────────────────────────────────────────────────────
 function renderDashboard() {
   const now = new Date();
-  const h = now.getHours();
-  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dash-greeting').textContent = greeting;
   document.getElementById('dash-date').textContent = now.toLocaleDateString('en-SG', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  const entries = loadEntries();
-  const todayStr = today();
-  const todayItems = allEntries().filter(e => (e.start === todayStr || e.due === todayStr));
-  const overdueItems = entries.filter(e => isOverdue(e));
-  const doneItems = entries.filter(e => e.status === 'Done');
-  const inprogItems = entries.filter(e => e.status === 'In Progress');
+  const todayStr = toDateStr(now);
+  const events = [...SG_HOLIDAYS, ...loadData()];
+  const tasks = loadTasks();
 
-  // Stats
-  document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total entries</div><div class="stat-value">${entries.length}</div><div class="stat-sub">across all categories</div></div>
-    <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-value" style="color:var(--accent)">${inprogItems.length}</div><div class="stat-sub">active items</div></div>
-    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--success)">${doneItems.length}</div><div class="stat-sub">items done</div></div>
-    <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:${overdueItems.length>0?'var(--danger)':'var(--success)'}">${overdueItems.length}</div><div class="stat-sub">need attention</div></div>
-  `;
+  // Overdue
+  const overdue = tasks.filter(t => t.status !== 'done' && t.status !== 'rolled' && t.dueDate && t.dueDate < todayStr);
+  const banner = document.getElementById('overdue-banner');
+  if (overdue.length > 0) {
+    banner.innerHTML = `<div class="overdue-banner">${overdue.length} overdue task${overdue.length>1?'s':''} — visit Tasks to review and roll over.</div>`;
+  } else { banner.innerHTML = ''; }
 
   // Today
+  const todayEvents = events.filter(e => e.date === todayStr || (e.endDate && e.date <= todayStr && e.endDate >= todayStr));
+  const todayTasks = tasks.filter(t => t.dueDate === todayStr && t.status !== 'done');
   const todayEl = document.getElementById('dash-today');
-  if (todayItems.length === 0) {
-    todayEl.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-sub">Nothing scheduled for today.</div></div>';
+  let todayHTML = '';
+  if (todayEvents.length === 0 && todayTasks.length === 0) {
+    todayHTML = '<div class="empty" style="padding:20px 0">Nothing scheduled today</div>';
+  }
+  todayEvents.forEach(e => {
+    const time = e.startTime ? ` · ${e.startTime}` : '';
+    todayHTML += `<div class="upcoming-item"><span class="dot ${e.category.toLowerCase()}"></span><div><div class="upcoming-title">${e.title}</div><div class="upcoming-meta">${e.category}${time}</div></div></div>`;
+  });
+  todayTasks.forEach(t => {
+    todayHTML += `<div class="upcoming-item"><span class="dot ${t.category.toLowerCase()}"></span><div><div class="upcoming-title">${t.title}</div><div class="upcoming-meta">${t.category} · ${t.priority} priority</div></div></div>`;
+  });
+  todayEl.innerHTML = todayHTML;
+
+  // Upcoming 7 days
+  const upcoming = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() + i);
+    const ds = toDateStr(d);
+    events.filter(e => e.date === ds).forEach(e => upcoming.push({...e, _ds: ds}));
+    tasks.filter(t => t.dueDate === ds && t.status !== 'done').forEach(t => upcoming.push({...t, _ds: ds, _isTask: true}));
+  }
+  upcoming.sort((a,b) => a._ds.localeCompare(b._ds));
+  const upEl = document.getElementById('dash-upcoming');
+  if (upcoming.length === 0) {
+    upEl.innerHTML = '<div class="empty" style="padding:20px 0">Nothing in the next 7 days</div>';
   } else {
-    todayEl.innerHTML = todayItems.slice(0,6).map(e => `
-      <div class="today-item">
-        <span class="dot dot-${catClass(e.category)}"></span>
-        <div class="today-item-text">
-          <div class="today-item-title">${e.title}</div>
-          <div class="today-item-meta">${e.category}${e.stream?' · '+e.stream:''}</div>
-        </div>
-        ${e.status?`<span class="badge badge-${statusClass(e.status)}">${e.status}</span>`:''}
-      </div>`).join('');
+    upEl.innerHTML = upcoming.slice(0,8).map(e => {
+      const d = new Date(e._ds); const label = d.toLocaleDateString('en-SG',{weekday:'short',month:'short',day:'numeric'});
+      const time = e.startTime ? ` · ${e.startTime}` : '';
+      return `<div class="upcoming-item"><span class="dot ${e.category.toLowerCase()}"></span><div><div class="upcoming-title">${e.title}</div><div class="upcoming-meta">${label}${time} · ${e.category}</div></div></div>`;
+    }).join('');
   }
 
-  // This week
-  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
-  const weekEndStr = weekEnd.toISOString().split('T')[0];
-  const weekItems = allEntries().filter(e => e.due > todayStr && e.due <= weekEndStr);
-  const weekEl = document.getElementById('dash-week');
-  if (weekItems.length === 0) {
-    weekEl.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-sub">Nothing due in the next 7 days.</div></div>';
-  } else {
-    weekEl.innerHTML = weekItems.slice(0,6).map(e => `
-      <div class="today-item">
-        <span class="dot dot-${catClass(e.category)}"></span>
-        <div class="today-item-text">
-          <div class="today-item-title">${e.title}</div>
-          <div class="today-item-meta">Due ${fmtDate(e.due)}${e.stream?' · '+e.stream:''}</div>
-        </div>
-        ${e.priority?`<span class="badge badge-${(e.priority||'').toLowerCase()}">${e.priority}</span>`:''}
-      </div>`).join('');
-  }
-
-  // Category breakdown
-  const cats = ['Work','Personal','Health','Others','Holiday'];
-  const colors = {Work:'var(--work)',Personal:'var(--personal)',Health:'var(--health)',Others:'var(--others)',Holiday:'var(--holiday)'};
-  const total = allEntries().length || 1;
-  document.getElementById('dash-breakdown').innerHTML = cats.map(cat => {
-    const count = allEntries().filter(e => e.category === cat).length;
-    const pct = Math.round(count / total * 100);
-    return `<div style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-        <span style="font-weight:500">${cat}</span>
-        <span style="color:var(--muted)">${count} entries · ${pct}%</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[cat]}"></div></div>
-    </div>`;
+  // Category bars
+  const cats = ['Work','Personal','Health','Others'];
+  const colors = {Work:'var(--work)',Personal:'var(--personal)',Health:'var(--health)',Others:'var(--others)'};
+  const total = tasks.filter(t=>t.status!=='done').length || 1;
+  document.getElementById('dash-cats').innerHTML = cats.map(c => {
+    const count = tasks.filter(t=>t.category===c && t.status!=='done').length;
+    const pct = Math.round(count/total*100);
+    return `<div class="cat-bar"><div class="cat-bar-label"><span>${c}</span><span>${count} task${count!==1?'s':''}</span></div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${colors[c]}"></div></div></div>`;
   }).join('');
-
-  // Overdue alert
-  const ovEl = document.getElementById('dash-overdue-wrap');
-  if (overdueItems.length > 0) {
-    ovEl.innerHTML = `<div class="alert alert-warning"><strong>${overdueItems.length} overdue item${overdueItems.length>1?'s':''}:</strong> ${overdueItems.map(e=>`<strong>${e.title}</strong> (due ${fmtDate(e.due)})`).join(', ')}</div>`;
-  } else {
-    ovEl.innerHTML = '';
-  }
 }
 
-// ─── Entries Table ─────────────────────────────────────────────────────────
-function renderEntries() {
-  const search = (document.getElementById('filter-search').value||'').toLowerCase();
-  const cat = document.getElementById('filter-cat').value;
-  const status = document.getElementById('filter-status').value;
-  const priority = document.getElementById('filter-priority').value;
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
 
-  let entries = loadEntries().filter(e => {
-    if (search && !e.title.toLowerCase().includes(search) && !(e.notes||'').toLowerCase().includes(search) && !(e.stream||'').toLowerCase().includes(search)) return false;
-    if (cat && e.category !== cat) return false;
-    if (status && e.status !== status) return false;
-    if (priority && e.priority !== priority) return false;
+let calYear, calMonth;
+function calInit() { const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); }
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function calToday() { calInit(); renderCalendar(); }
+
+function renderCalendar() {
+  const label = new Date(calYear, calMonth, 1).toLocaleDateString('en-SG',{month:'long',year:'numeric'});
+  document.getElementById('cal-label').textContent = label;
+  const events = [...SG_HOLIDAYS, ...loadData()];
+  const tasks = loadTasks();
+  const todayStr = toDateStr(new Date());
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+  let cells = [];
+  for(let i=firstDay-1;i>=0;i--) cells.push({day:daysInPrev-i,cur:false});
+  for(let i=1;i<=daysInMonth;i++) cells.push({day:i,cur:true});
+  while(cells.length%7!==0) cells.push({day:cells.length-daysInMonth-firstDay+1,cur:false});
+  cells.forEach(c => {
+    const ds = c.cur ? `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(c.day).padStart(2,'0')}` : null;
+    const isToday = ds === todayStr;
+    const dayEvents = ds ? events.filter(e => {
+      if (e.endDate) return e.date <= ds && e.endDate >= ds;
+      return e.date === ds;
+    }) : [];
+    const dayTasks = ds ? tasks.filter(t => t.dueDate === ds) : [];
+    let evHTML = dayEvents.slice(0,3).map(e=>`<div class="cal-event ${e.category.toLowerCase()}" title="${e.title}${e.startTime?' · '+e.startTime:''}">${e.title}</div>`).join('');
+    if(dayTasks.length>0) evHTML += `<div class="cal-event task-dot">${dayTasks.length} task${dayTasks.length>1?'s':''}</div>`;
+    html += `<div class="cal-cell${!c.cur?' other-month':''}${isToday?' today':''}"><div class="cal-date">${c.day}</div>${evHTML}</div>`;
+  });
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+// ─── WEEK VIEW ───────────────────────────────────────────────────────────────
+
+let weekStart;
+function weekInit() {
+  const n = new Date(); const day = n.getDay();
+  weekStart = new Date(n); weekStart.setDate(n.getDate() - day); weekStart.setHours(0,0,0,0);
+}
+function weekPrev() { weekStart.setDate(weekStart.getDate()-7); renderWeek(); }
+function weekNext() { weekStart.setDate(weekStart.getDate()+7); renderWeek(); }
+function weekToday() { weekInit(); renderWeek(); }
+
+function renderWeek() {
+  const days = [];
+  for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);days.push(d);}
+  const end = new Date(weekStart); end.setDate(weekStart.getDate()+6);
+  document.getElementById('week-label').textContent =
+    weekStart.toLocaleDateString('en-SG',{month:'short',day:'numeric'}) + ' – ' +
+    end.toLocaleDateString('en-SG',{month:'short',day:'numeric',year:'numeric'});
+  const events = [...SG_HOLIDAYS, ...loadData()];
+  const todayStr = toDateStr(new Date());
+  const hours = [];
+  for(let h=7;h<=22;h++) hours.push(h);
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = `<div class="week-corner"></div>`;
+  days.forEach(d => {
+    const ds = toDateStr(d); const isToday = ds===todayStr;
+    html += `<div class="week-day-header"><div class="week-day-name">${dayNames[d.getDay()]}</div><div class="week-day-num${isToday?' today-num':''}">${d.getDate()}</div></div>`;
+  });
+  hours.forEach(h => {
+    html += `<div class="week-time-label">${h}:00</div>`;
+    days.forEach(d => {
+      const ds = toDateStr(d);
+      const slotEvents = events.filter(e => {
+        const eDate = e.date === ds || (e.endDate && e.date <= ds && e.endDate >= ds);
+        if(!eDate || !e.startTime) return false;
+        const eh = parseInt(e.startTime.split(':')[0]);
+        return eh === h;
+      });
+      let evBlocks = '';
+      slotEvents.forEach((e,idx) => {
+        const sh = parseInt(e.startTime.split(':')[0]);
+        const sm = parseInt(e.startTime.split(':')[1]||0);
+        const eh2 = e.endTime ? parseInt(e.endTime.split(':')[0]) : sh+1;
+        const em = e.endTime ? parseInt(e.endTime.split(':')[1]||0) : 0;
+        const topPct = (sm/60)*100;
+        const durH = (eh2 + em/60) - (sh + sm/60);
+        const heightPx = Math.max(durH * 48, 20);
+        evBlocks += `<div class="week-event-block ${e.category.toLowerCase()}" style="top:${topPct}%;height:${heightPx}px;left:${idx*2}px;" title="${e.title}${e.startTime?' · '+e.startTime:''}${e.endTime?' – '+e.endTime:''}">${e.title}</div>`;
+      });
+      html += `<div class="week-cell">${evBlocks}</div>`;
+    });
+  });
+  document.getElementById('week-grid').innerHTML = html;
+}
+
+// ─── TASKS ───────────────────────────────────────────────────────────────────
+
+let taskTabFilter = 'all';
+function filterTaskTab(val, el) {
+  taskTabFilter = val;
+  document.querySelectorAll('#page-tasks .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const tasks = loadTasks();
+  const search = document.getElementById('task-search').value.toLowerCase();
+  const cat = document.getElementById('task-filter-cat').value;
+  const pri = document.getElementById('task-filter-priority').value;
+  let filtered = tasks.filter(t => {
+    if(taskTabFilter !== 'all' && t.status !== taskTabFilter) return false;
+    if(cat && t.category !== cat) return false;
+    if(pri && t.priority !== pri) return false;
+    if(search && !t.title.toLowerCase().includes(search) && !(t.notes||'').toLowerCase().includes(search)) return false;
     return true;
   });
-
-  entries.sort((a,b) => {
-    if (a.due && b.due) return a.due.localeCompare(b.due);
-    if (a.due) return -1;
-    if (b.due) return 1;
-    return 0;
+  filtered.sort((a,b) => {
+    const po = {High:0,Medium:1,Low:2};
+    if(po[a.priority]!==po[b.priority]) return po[a.priority]-po[b.priority];
+    return (a.dueDate||'').localeCompare(b.dueDate||'');
   });
-
-  const tbody = document.getElementById('entries-tbody');
-  if (entries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-title">No entries found</div><div class="empty-sub">Try adjusting your filters or add a new entry.</div></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = entries.map(e => `
-    <tr>
+  const tbody = document.getElementById('task-tbody');
+  if(filtered.length===0){tbody.innerHTML=`<tr><td colspan="6"><div class="empty">No tasks found</div></td></tr>`;return;}
+  tbody.innerHTML = filtered.map(t => {
+    const statusLabel = {todo:'To Do',inprogress:'In Progress',done:'Done',rolled:'Rolled Over'}[t.status]||t.status;
+    const rolledNote = t.status==='rolled' && t.originalDue ? `<div class="task-rolled">Originally due: ${formatDate(t.originalDue)}</div>` : '';
+    const startByNote = t.startByDate ? `<div class="startby-tag">Start by: ${formatDate(t.startByDate)}</div>` : '';
+    const dueDisplay = t.dueDate ? `${formatDate(t.dueDate)}${startByNote}` : '—';
+    const streamTag = t.stream ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${t.stream}</div>` : '';
+    return `<tr>
+      <td><div class="task-title-cell">${t.title}</div>${streamTag}${rolledNote}</td>
+      <td><span class="badge ${t.category.toLowerCase()}">${t.category}</span></td>
+      <td><span class="badge ${t.priority.toLowerCase()}">${t.priority}</span></td>
+      <td><span class="badge ${t.status}">${statusLabel}</span></td>
+      <td style="font-size:12px;">${dueDisplay}</td>
       <td>
-        <div class="entry-title">${e.title}${isOverdue(e)?` <span class="badge badge-overdue" style="font-size:10.5px">Overdue</span>`:''}</div>
-        ${e.stream?`<div class="entry-notes">${e.stream}</div>`:''}
-        ${e.notes?`<div class="entry-notes">${e.notes.substring(0,60)}${e.notes.length>60?'...':''}</div>`:''}
-      </td>
-      <td><span class="badge badge-${catClass(e.category)}">${e.category}</span></td>
-      <td>${e.priority?`<span class="badge badge-${(e.priority).toLowerCase()}">${e.priority}</span>`:'—'}</td>
-      <td>${e.status?`<span class="badge badge-${statusClass(e.status)}">${e.status}</span>`:'—'}</td>
-      <td style="color:var(--muted);font-size:13px">${fmtDate(e.start)}</td>
-      <td style="color:var(--muted);font-size:13px">${fmtDate(e.due)}</td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${e.status !== 'Done' ? `<button class="btn btn-secondary btn-xs" onclick="markDone('${e.id}')">Done</button>` : ''}
-          <button class="btn btn-secondary btn-xs" onclick="openEdit('${e.id}')">Edit</button>
-          <button class="btn btn-danger btn-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${t.status!=='done'?`<button class="btn btn-secondary btn-sm" onclick="markDone('${t.id}')">Done</button>`:''}
+          <button class="btn btn-secondary btn-sm" onclick="editTask('${t.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Del</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-// ─── Entry Actions ─────────────────────────────────────────────────────────
-function saveEntry(e) {
-  e.preventDefault();
-  const entries = loadEntries();
-  entries.push({
-    id: genId(),
-    title: document.getElementById('f-title').value.trim(),
-    category: document.getElementById('f-category').value,
-    stream: document.getElementById('f-stream').value.trim(),
-    priority: document.getElementById('f-priority').value,
-    status: document.getElementById('f-status').value,
-    start: document.getElementById('f-start').value,
-    due: document.getElementById('f-due').value,
-    notes: document.getElementById('f-notes').value.trim(),
-    created: new Date().toISOString()
+function rolloverTasks() {
+  const tasks = loadTasks();
+  const todayStr = toDateStr(new Date());
+  let count = 0;
+  tasks.forEach(t => {
+    if(t.status !== 'done' && t.status !== 'rolled' && t.dueDate && t.dueDate < todayStr) {
+      t.originalDue = t.originalDue || t.dueDate;
+      t.dueDate = todayStr;
+      t.status = 'rolled';
+      count++;
+    }
   });
-  saveEntries(entries);
-  resetForm();
-  showView('entries');
-}
-
-function resetForm() {
-  document.getElementById('entry-form').reset();
-  document.getElementById('edit-id').value = '';
-}
-
-function deleteEntry(id) {
-  if (!confirm('Delete this entry?')) return;
-  saveEntries(loadEntries().filter(e => e.id !== id));
-  renderEntries();
-  renderDashboard();
+  saveTasks(tasks);
+  renderTasks();
+  if(count>0) alert(`${count} task${count>1?'s':''} rolled over to today.`);
+  else alert('No overdue tasks to roll over.');
 }
 
 function markDone(id) {
-  const entries = loadEntries();
-  const i = entries.findIndex(e => e.id === id);
-  if (i > -1) entries[i].status = 'Done';
-  saveEntries(entries);
-  renderEntries();
+  const tasks = loadTasks();
+  const t = tasks.find(t=>t.id===id);
+  if(t) { t.status = 'done'; saveTasks(tasks); renderTasks(); }
 }
 
-function openEdit(id) {
-  const entry = loadEntries().find(e => e.id === id);
-  if (!entry) return;
-  document.getElementById('m-id').value = entry.id;
-  document.getElementById('m-title').value = entry.title;
-  document.getElementById('m-category').value = entry.category;
-  document.getElementById('m-stream').value = entry.stream || '';
-  document.getElementById('m-priority').value = entry.priority || 'Medium';
-  document.getElementById('m-status').value = entry.status || 'To Do';
-  document.getElementById('m-start').value = entry.start || '';
-  document.getElementById('m-due').value = entry.due || '';
-  document.getElementById('m-notes').value = entry.notes || '';
-  document.getElementById('edit-modal').classList.add('open');
+function deleteTask(id) {
+  if(!confirm('Delete this task?')) return;
+  const tasks = loadTasks().filter(t=>t.id!==id);
+  saveTasks(tasks); renderTasks();
 }
 
-function saveEdit(e) {
-  e.preventDefault();
-  const entries = loadEntries();
-  const i = entries.findIndex(e => e.id === document.getElementById('m-id').value);
-  if (i > -1) {
-    entries[i] = { ...entries[i],
-      title: document.getElementById('m-title').value.trim(),
-      category: document.getElementById('m-category').value,
-      stream: document.getElementById('m-stream').value.trim(),
-      priority: document.getElementById('m-priority').value,
-      status: document.getElementById('m-status').value,
-      start: document.getElementById('m-start').value,
-      due: document.getElementById('m-due').value,
-      notes: document.getElementById('m-notes').value.trim(),
+let editingTaskId = null;
+function openTaskModal(prefill) {
+  editingTaskId = null;
+  document.getElementById('task-modal-title').textContent = 'Add Task';
+  document.getElementById('tk-title').value = prefill?.title || '';
+  document.getElementById('tk-cat').value = prefill?.category || 'Work';
+  document.getElementById('tk-stream').value = prefill?.stream || '';
+  document.getElementById('tk-priority').value = prefill?.priority || 'Medium';
+  document.getElementById('tk-status').value = prefill?.status || 'todo';
+  document.getElementById('tk-start').value = prefill?.startDate || '';
+  document.getElementById('tk-due').value = prefill?.dueDate || '';
+  document.getElementById('tk-lead-val').value = '';
+  document.getElementById('tk-lead-unit').value = 'days';
+  document.getElementById('tk-notes').value = prefill?.notes || '';
+  document.getElementById('task-modal').classList.add('open');
+}
+function closeTaskModal() { document.getElementById('task-modal').classList.remove('open'); editingTaskId = null; }
+
+function editTask(id) {
+  const tasks = loadTasks();
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  editingTaskId = id;
+  document.getElementById('task-modal-title').textContent = 'Edit Task';
+  document.getElementById('tk-title').value = t.title;
+  document.getElementById('tk-cat').value = t.category;
+  document.getElementById('tk-stream').value = t.stream||'';
+  document.getElementById('tk-priority').value = t.priority;
+  document.getElementById('tk-status').value = t.status;
+  document.getElementById('tk-start').value = t.startDate||'';
+  document.getElementById('tk-due').value = t.dueDate||'';
+  document.getElementById('tk-lead-val').value = t.leadVal||'';
+  document.getElementById('tk-lead-unit').value = t.leadUnit||'days';
+  document.getElementById('tk-notes').value = t.notes||'';
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function saveTask() {
+  const title = document.getElementById('tk-title').value.trim();
+  if(!title) { alert('Please enter a task title.'); return; }
+  const dueDate = document.getElementById('tk-due').value;
+  const leadVal = parseInt(document.getElementById('tk-lead-val').value)||0;
+  const leadUnit = document.getElementById('tk-lead-unit').value;
+  let startByDate = null;
+  if(dueDate && leadVal > 0) {
+    const d = new Date(dueDate);
+    if(leadUnit==='weeks') d.setDate(d.getDate()-(leadVal*7));
+    else d.setDate(d.getDate()-leadVal);
+    startByDate = toDateStr(d);
+  }
+  const tasks = loadTasks();
+  if(editingTaskId) {
+    const idx = tasks.findIndex(t=>t.id===editingTaskId);
+    if(idx>-1) {
+      tasks[idx] = {...tasks[idx],
+        title, category: document.getElementById('tk-cat').value,
+        stream: document.getElementById('tk-stream').value.trim(),
+        priority: document.getElementById('tk-priority').value,
+        status: document.getElementById('tk-status').value,
+        startDate: document.getElementById('tk-start').value,
+        dueDate, leadVal, leadUnit, startByDate,
+        notes: document.getElementById('tk-notes').value.trim()
+      };
+    }
+  } else {
+    const newTask = {
+      id: uid(), type:'task', title,
+      category: document.getElementById('tk-cat').value,
+      stream: document.getElementById('tk-stream').value.trim(),
+      priority: document.getElementById('tk-priority').value,
+      status: document.getElementById('tk-status').value,
+      startDate: document.getElementById('tk-start').value,
+      dueDate, leadVal, leadUnit, startByDate,
+      notes: document.getElementById('tk-notes').value.trim(),
+      createdAt: new Date().toISOString()
     };
-    saveEntries(entries);
+    tasks.push(newTask);
+    // Auto-generate "Start By" reminder task if lead time set
+    if(startByDate && leadVal > 0) {
+      const reminderTask = {
+        id: uid(), type:'task',
+        title: `[Start] ${title}`,
+        category: newTask.category,
+        stream: newTask.stream,
+        priority: newTask.priority,
+        status: 'todo',
+        startDate: '', dueDate: startByDate,
+        leadVal: 0, leadUnit: 'days', startByDate: null,
+        notes: `Auto-generated start reminder for: "${title}" (due ${dueDate})`,
+        createdAt: new Date().toISOString(), isAutoReminder: true
+      };
+      tasks.push(reminderTask);
+    }
   }
-  closeModal();
-  renderEntries();
+  saveTasks(tasks);
+  closeTaskModal();
+  renderTasks();
 }
 
-function closeModal() {
-  document.getElementById('edit-modal').classList.remove('open');
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+let editingEventId = null;
+function openEventModal(prefill) {
+  editingEventId = null;
+  document.getElementById('event-modal-title').textContent = 'Add Event';
+  document.getElementById('ev-title').value = prefill?.title||'';
+  document.getElementById('ev-cat').value = prefill?.category||'Work';
+  document.getElementById('ev-stream').value = prefill?.stream||'';
+  document.getElementById('ev-date').value = prefill?.date||'';
+  document.getElementById('ev-enddate').value = prefill?.endDate||'';
+  document.getElementById('ev-start').value = prefill?.startTime||'';
+  document.getElementById('ev-end').value = prefill?.endTime||'';
+  document.getElementById('ev-notes').value = prefill?.notes||'';
+  document.getElementById('event-modal').classList.add('open');
+}
+function closeEventModal() { document.getElementById('event-modal').classList.remove('open'); editingEventId = null; }
+
+function saveEvent() {
+  const title = document.getElementById('ev-title').value.trim();
+  if(!title) { alert('Please enter an event title.'); return; }
+  const events = loadData();
+  const ev = {
+    id: editingEventId || uid(), type:'event', title,
+    category: document.getElementById('ev-cat').value,
+    stream: document.getElementById('ev-stream').value.trim(),
+    date: document.getElementById('ev-date').value,
+    endDate: document.getElementById('ev-enddate').value,
+    startTime: document.getElementById('ev-start').value,
+    endTime: document.getElementById('ev-end').value,
+    notes: document.getElementById('ev-notes').value.trim(),
+    createdAt: new Date().toISOString()
+  };
+  if(editingEventId) {
+    const idx = events.findIndex(e=>e.id===editingEventId);
+    if(idx>-1) events[idx]=ev; else events.push(ev);
+  } else { events.push(ev); }
+  saveData(events);
+  closeEventModal();
+  renderCalendar();
 }
 
-// ─── Calendar ──────────────────────────────────────────────────────────────
-let calYear, calMonth;
-function initCal() {
-  const now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
+// ─── GANTT ───────────────────────────────────────────────────────────────────
+
+let ganttStartDate;
+let ganttDays = 56;
+function ganttInit() {
+  const n = new Date(); n.setDate(n.getDate()-7);
+  ganttStartDate = new Date(n); ganttStartDate.setHours(0,0,0,0);
 }
-function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
-function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+function ganttPrev() { ganttStartDate.setDate(ganttStartDate.getDate()-28); renderGantt(); }
+function ganttNext() { ganttStartDate.setDate(ganttStartDate.getDate()+28); renderGantt(); }
+function ganttToday() { ganttInit(); renderGantt(); }
 
-function renderCalendar() {
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-title').textContent = `${months[calMonth]} ${calYear}`;
-  const grid = document.getElementById('cal-grid');
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const todayStr = today();
-  const entries = allEntries();
-
-  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr === todayStr;
-    const dayEntries = entries.filter(e => e.due === dateStr || e.start === dateStr);
-    html += `<div class="cal-day${isToday?' today':''}">
-      <div class="cal-day-num">${d}</div>
-      ${dayEntries.slice(0,3).map(e => `<div class="cal-event cal-event-${catClass(e.category)}" title="${e.title}">${e.title}</div>`).join('')}
-      ${dayEntries.length > 3 ? `<div style="font-size:10.5px;color:var(--muted)">+${dayEntries.length-3} more</div>` : ''}
-    </div>`;
+function renderGantt() {
+  const tasks = loadTasks();
+  const catFilter = document.getElementById('gantt-filter-cat').value;
+  const filtered = tasks.filter(t => {
+    if(catFilter && t.category !== catFilter) return false;
+    if(!t.dueDate) return false;
+    return true;
+  });
+  const ganttEnd = new Date(ganttStartDate); ganttEnd.setDate(ganttStartDate.getDate()+ganttDays);
+  const startStr = toDateStr(ganttStartDate); const endStr = toDateStr(ganttEnd);
+  document.getElementById('gantt-range-label').textContent =
+    ganttStartDate.toLocaleDateString('en-SG',{month:'short',day:'numeric'}) + ' – ' +
+    ganttEnd.toLocaleDateString('en-SG',{month:'short',day:'numeric',year:'numeric'});
+  const totalMs = ganttDays * 86400000;
+  const todayStr = toDateStr(new Date());
+  // Build week tick marks
+  const ticks = [];
+  let d = new Date(ganttStartDate);
+  while(d <= ganttEnd) { ticks.push(new Date(d)); d.setDate(d.getDate()+7); }
+  let html = `<div class="gantt-date-header"><div class="gantt-date-label-spacer"></div><div class="gantt-date-labels">`;
+  ticks.forEach((t,i) => {
+    const nextTick = ticks[i+1] || ganttEnd;
+    const tickMs = Math.min(nextTick - t, ganttEnd - ganttStartDate);
+    const pct = (tickMs / totalMs) * 100;
+    html += `<div class="gantt-date-tick" style="flex:0 0 ${pct}%">${t.toLocaleDateString('en-SG',{month:'short',day:'numeric'})}</div>`;
+  });
+  html += `</div></div>`;
+  if(filtered.length === 0) {
+    html += `<div class="empty">No tasks with due dates found. Add tasks with due dates to see them here.</div>`;
+  } else {
+    filtered.sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
+    filtered.forEach(t => {
+      const dueDate = new Date(t.dueDate);
+      const startDate = t.startDate ? new Date(t.startDate) : new Date(t.dueDate);
+      const clampedStart = new Date(Math.max(startDate, ganttStartDate));
+      const clampedEnd = new Date(Math.min(dueDate, ganttEnd));
+      if(clampedEnd < ganttStartDate || clampedStart > ganttEnd) return;
+      const barLeft = ((clampedStart - ganttStartDate) / totalMs) * 100;
+      const barWidth = Math.max(((clampedEnd - clampedStart) / totalMs) * 100, 0.5);
+      let startByBar = '';
+      if(t.startByDate) {
+        const sbDate = new Date(t.startByDate);
+        const sbClamped = new Date(Math.max(sbDate, ganttStartDate));
+        const sbLeft = ((sbClamped - ganttStartDate) / totalMs) * 100;
+        const sbWidth = Math.max(((clampedStart - sbClamped) / totalMs) * 100, 0.5);
+        if(sbLeft >= 0 && sbWidth > 0) {
+          startByBar = `<div class="gantt-startby ${t.category.toLowerCase()}" style="left:${sbLeft}%;width:${sbWidth}%" title="Lead time: start by ${formatDate(t.startByDate)}"></div>`;
+        }
+      }
+      const todayLeft = ((new Date(todayStr) - ganttStartDate) / totalMs) * 100;
+      const todayLine = todayLeft >= 0 && todayLeft <= 100 ? `<div class="gantt-today-line" style="left:${todayLeft}%"></div>` : '';
+      const streamLabel = t.stream ? ` <span style="font-size:10px;color:var(--text-secondary);">[${t.stream}]</span>` : '';
+      const statusBadge = `<span class="badge ${t.status}" style="font-size:10px;">${{todo:'To Do',inprogress:'In Progress',done:'Done',rolled:'Rolled'}[t.status]||t.status}</span>`;
+      html += `<div class="gantt-row">
+        <div class="gantt-label"><div style="font-weight:500;font-size:12px;">${t.title}${streamLabel}</div><div style="margin-top:2px;">${statusBadge}</div></div>
+        <div class="gantt-timeline">${todayLine}${startByBar}<div class="gantt-bar ${t.category.toLowerCase()}" style="left:${barLeft}%;width:${barWidth}%" title="${t.title} · Due: ${formatDate(t.dueDate)}"></div></div>
+      </div>`;
+    });
   }
-  grid.innerHTML = html;
+  document.getElementById('gantt-table').innerHTML = html;
 }
 
-// ─── Data Backup ───────────────────────────────────────────────────────────
+// ─── DATA MANAGEMENT ─────────────────────────────────────────────────────────
+
 function exportData() {
-  const data = { version: 1, exported: new Date().toISOString(), entries: loadEntries() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `planner-backup-${today()}.json`;
-  a.click();
+  const payload = { events: loadData(), tasks: loadTasks(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `planner-backup-${toDateStr(new Date())}.json`; a.click();
 }
 
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function importData(e) {
+  const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = ev => {
     try {
-      const data = JSON.parse(e.target.result);
-      const incoming = data.entries || data;
-      if (!Array.isArray(incoming)) { alert('Invalid file format.'); return; }
-      const existing = loadEntries();
-      const existingIds = new Set(existing.map(e => e.id));
-      const merged = [...existing, ...incoming.filter(e => !existingIds.has(e.id))];
-      saveEntries(merged);
-      alert(`Import complete. ${merged.length - existing.length} new entries added.`);
-      renderEntries();
-    } catch { alert('Could not read file. Please use a valid JSON backup.'); }
+      const data = JSON.parse(ev.target.result);
+      const existingEvents = loadData(); const existingTasks = loadTasks();
+      const existingEventIds = new Set(existingEvents.map(e=>e.id));
+      const existingTaskIds = new Set(existingTasks.map(t=>t.id));
+      const newEvents = (data.events||[]).filter(e=>!existingEventIds.has(e.id));
+      const newTasks = (data.tasks||[]).filter(t=>!existingTaskIds.has(t.id));
+      saveData([...existingEvents,...newEvents]);
+      saveTasks([...existingTasks,...newTasks]);
+      alert(`Imported ${newEvents.length} events and ${newTasks.length} tasks.`);
+      renderDataSummary();
+    } catch(err) { alert('Invalid JSON file. Please use a file exported from this planner.'); }
   };
   reader.readAsText(file);
-  event.target.value = '';
+  e.target.value = '';
 }
 
-function clearAll() {
-  if (!confirm('This will delete ALL your entries permanently. Are you sure?')) return;
-  if (!confirm('Last chance — this cannot be undone.')) return;
-  localStorage.removeItem('planner_entries');
-  renderEntries();
-  renderDashboard();
-  alert('All entries cleared.');
+function clearAllData() {
+  if(!confirm('This will permanently delete all your tasks and events. Singapore public holidays will remain. Are you sure?')) return;
+  saveData([]); saveTasks([]);
+  alert('All data cleared.'); renderDataSummary();
 }
 
-// ─── Init ──────────────────────────────────────────────────────────────────
-initCal();
+function renderDataSummary() {
+  const events = loadData(); const tasks = loadTasks();
+  document.getElementById('data-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;"><span>Total events</span><strong>${events.length}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Total tasks</span><strong>${tasks.length}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Active tasks</span><strong>${tasks.filter(t=>t.status!=='done').length}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Completed tasks</span><strong>${tasks.filter(t=>t.status==='done').length}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Rolled over tasks</span><strong>${tasks.filter(t=>t.status==='rolled').length}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>SG Public Holidays</span><strong>${SG_HOLIDAYS.length}</strong></div>
+    </div>`;
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatDate(s) {
+  if(!s) return ''; const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+calInit(); weekInit(); ganttInit();
 renderDashboard();
 </script>
 </body>
