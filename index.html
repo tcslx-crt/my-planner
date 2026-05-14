@@ -25,7 +25,7 @@
     --low: #27ae60;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; font-size: 14px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 20px; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
 
   /* Sidebar */
   .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
@@ -210,7 +210,7 @@
     <div class="nav-item" onclick="showPage('gantt')"><span class="nav-icon">&#9644;</span><span>Gantt</span></div>
     <div class="nav-item" onclick="showPage('data')"><span class="nav-icon">&#9650;</span><span>Data</span></div>
   </nav>
-  <div class="sidebar-footer">v3.0</div>
+  <div class="sidebar-footer">v3.1</div>
 </aside>
 
 <!-- Main -->
@@ -222,7 +222,7 @@
     <div class="page-content">
       <div class="grid-3" id="dash-stats"></div>
       <div class="grid-2">
-        <div class="card"><div class="card-title">To-Do — Due Today & Overdue</div><ul class="today-list" id="dash-todo"></ul></div>
+        <div class="card"><div class="card-title">To-Do — Due Today &amp; Overdue</div><ul class="today-list" id="dash-todo"></ul></div>
         <div class="card"><div class="card-title">Today's Events</div><ul class="today-list" id="dash-events"></ul></div>
       </div>
       <div class="card"><div class="card-title">Category Breakdown</div><div id="dash-breakdown"></div></div>
@@ -449,21 +449,53 @@ const SG_HOLIDAYS = [
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function today() { return new Date().toISOString().slice(0,10); }
-function fmtDate(d) { if(!d) return '—'; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
-function fmtTime(t) { if(!t) return ''; const [h,m]=t.split(':'); const ap=+h>=12?'pm':'am'; return ((+h%12)||12)+':'+m+ap; }
-function catClass(c) {
-  if(!c) return 'others';
-  const m={'Work':'work','Personal':'personal','Health':'health','Study / Course':'study','Holiday':'holiday','Others':'others'};
-  return m[c]||'others';
+
+// KEY FIX: Always build date strings from local year/month/day — never use .toISOString() on a local date
+// This prevents UTC timezone shift (e.g. UTC+8 causing dates to appear 1 day earlier)
+function localDateStr(y, m, d) {
+  return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
 }
-function addDays(dateStr, n) { const d=new Date(dateStr); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
-function diffDays(a,b) { return Math.round((new Date(b)-new Date(a))/(1000*86400)); }
-function startOfWeek(dateStr) { const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-(day===0?6:day-1)); return d.toISOString().slice(0,10); }
+
+function today() {
+  const n = new Date();
+  return localDateStr(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const p = d.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const ap = +h >= 12 ? 'pm' : 'am';
+  return ((+h % 12) || 12) + ':' + m + ap;
+}
+
+function catClass(c) {
+  if (!c) return 'others';
+  const m = {'Work':'work','Personal':'personal','Health':'health','Study / Course':'study','Holiday':'holiday','Others':'others'};
+  return m[c] || 'others';
+}
+
+// Add days to a YYYY-MM-DD string, returns YYYY-MM-DD (local, no UTC shift)
+function addDays(dateStr, n) {
+  const p = dateStr.split('-');
+  const d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+  return localDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function diffDays(a, b) {
+  const pa = a.split('-'), pb = b.split('-');
+  const da = new Date(+pa[0], +pa[1]-1, +pa[2]);
+  const db = new Date(+pb[0], +pb[1]-1, +pb[2]);
+  return Math.round((db - da) / 86400000);
+}
 
 // ─── RECURRING EXPANSION ────────────────────────────────────────────────────
 function expandEvent(ev, fromDate, toDate) {
-  // Returns array of {ev, date} for all occurrences in [fromDate, toDate]
   const results = [];
   if (!ev.recur || ev.recur === 'none') {
     if (ev.date >= fromDate && ev.date <= toDate) results.push({ev, date: ev.date});
@@ -481,8 +513,16 @@ function expandEvent(ev, fromDate, toDate) {
     }
     if (ev.recur === 'weekly') cur = addDays(cur, 7);
     else if (ev.recur === 'biweekly') cur = addDays(cur, 14);
-    else if (ev.recur === 'monthly') { const d=new Date(cur); d.setMonth(d.getMonth()+1); cur=d.toISOString().slice(0,10); }
-    else if (ev.recur === 'yearly') { const d=new Date(cur); d.setFullYear(d.getFullYear()+1); cur=d.toISOString().slice(0,10); }
+    else if (ev.recur === 'monthly') {
+      const p = cur.split('-');
+      const d = new Date(+p[0], +p[1] - 1 + 1, +p[2]);
+      cur = localDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    else if (ev.recur === 'yearly') {
+      const p = cur.split('-');
+      const d = new Date(+p[0] + 1, +p[1] - 1, +p[2]);
+      cur = localDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+    }
     else break;
   }
   return results;
@@ -491,11 +531,11 @@ function expandEvent(ev, fromDate, toDate) {
 function getEventsOnDate(dateStr) {
   const events = loadEvents();
   const results = [];
-  // SG Holidays
-  SG_HOLIDAYS.filter(h=>h.d===dateStr).forEach(h=>results.push({isHoliday:true,title:h.n,cat:'Holiday',date:dateStr,startTime:'',endTime:''}));
+  SG_HOLIDAYS.filter(h => h.d === dateStr).forEach(h =>
+    results.push({isHoliday:true, title:h.n, cat:'Holiday', date:dateStr, startTime:'', endTime:''})
+  );
   events.forEach(ev => {
-    const occ = expandEvent(ev, dateStr, dateStr);
-    occ.forEach(o => results.push({...ev, date:o.date, isOccurrence:true}));
+    expandEvent(ev, dateStr, dateStr).forEach(o => results.push({...ev, date:o.date, isOccurrence:true}));
   });
   return results;
 }
@@ -503,41 +543,42 @@ function getEventsOnDate(dateStr) {
 function getEventsInRange(fromDate, toDate) {
   const events = loadEvents();
   const results = [];
-  SG_HOLIDAYS.filter(h=>h.d>=fromDate&&h.d<=toDate).forEach(h=>results.push({isHoliday:true,title:h.n,cat:'Holiday',date:h.d,startTime:'',endTime:''}));
+  SG_HOLIDAYS.filter(h => h.d >= fromDate && h.d <= toDate).forEach(h =>
+    results.push({isHoliday:true, title:h.n, cat:'Holiday', date:h.d, startTime:'', endTime:''})
+  );
   events.forEach(ev => {
-    const occ = expandEvent(ev, fromDate, toDate);
-    occ.forEach(o => results.push({...ev, date:o.date, isOccurrence:true}));
+    expandEvent(ev, fromDate, toDate).forEach(o => results.push({...ev, date:o.date, isOccurrence:true}));
   });
   return results;
 }
 
 // ─── NAVIGATION ─────────────────────────────────────────────────────────────
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
-  if(name==='dashboard') renderDashboard();
-  if(name==='tasks') renderTasks();
-  if(name==='week') renderWeek();
-  if(name==='calendar') renderCalendar();
-  if(name==='gantt') renderGantt();
-  if(name==='data') renderStorageInfo();
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'tasks') renderTasks();
+  if (name === 'week') renderWeek();
+  if (name === 'calendar') renderCalendar();
+  if (name === 'gantt') renderGantt();
+  if (name === 'data') renderStorageInfo();
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────
 function renderDashboard() {
   const now = new Date();
   const hour = now.getHours();
-  const greet = hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dash-greeting').textContent = greet;
-  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-SG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-SG', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
   const tasks = loadTasks();
   const todayStr = today();
-  const overdue = tasks.filter(t=>t.status!=='Done'&&t.due&&t.due<todayStr);
-  const dueToday = tasks.filter(t=>t.status!=='Done'&&t.due===todayStr);
-  const inProg = tasks.filter(t=>t.status==='In Progress');
+  const overdue = tasks.filter(t => t.status !== 'Done' && t.due && t.due < todayStr);
+  const dueToday = tasks.filter(t => t.status !== 'Done' && t.due === todayStr);
+  const inProg = tasks.filter(t => t.status === 'In Progress');
 
   document.getElementById('dash-stats').innerHTML = `
     <div class="card"><div class="card-title">Due Today</div><div class="stat-row"><span class="stat-num">${dueToday.length}</span><span class="stat-label">tasks</span></div></div>
@@ -545,44 +586,43 @@ function renderDashboard() {
     <div class="card"><div class="card-title">In Progress</div><div class="stat-row"><span class="stat-num">${inProg.length}</span><span class="stat-label">tasks</span></div></div>
   `;
 
-  // To-do list
-  const todoItems = [...overdue.map(t=>({...t,_overdue:true})),...dueToday];
+  const todoItems = [...overdue.map(t => ({...t, _overdue:true})), ...dueToday];
   const todoEl = document.getElementById('dash-todo');
-  if(!todoItems.length) { todoEl.innerHTML='<li style="color:var(--text-muted);font-size:13px;">All clear — nothing due today.</li>'; }
-  else {
-    todoEl.innerHTML = todoItems.map(t=>`
+  if (!todoItems.length) {
+    todoEl.innerHTML = '<li style="color:var(--text-muted);font-size:13px;">All clear — nothing due today.</li>';
+  } else {
+    todoEl.innerHTML = todoItems.map(t => `
       <li>
         <span class="dot dot-${catClass(t.cat)}"></span>
         <div style="flex:1">
-          <div>${t.title}${t._overdue?'<span style="color:var(--high);font-size:11px;margin-left:6px;">Overdue</span>':''}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${t.stream?t.stream+' · ':''}Due ${fmtDate(t.due)}</div>
+          <div>${t.title}${t._overdue ? '<span style="color:var(--high);font-size:11px;margin-left:6px;">Overdue</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${t.stream ? t.stream + ' · ' : ''}Due ${fmtDate(t.due)}</div>
         </div>
-        <span class="badge badge-${t.pri?.toLowerCase()||'medium'}">${t.pri||'Medium'}</span>
+        <span class="badge badge-${(t.pri||'medium').toLowerCase()}">${t.pri||'Medium'}</span>
       </li>`).join('');
   }
 
-  // Today's events
-  const evs = getEventsOnDate(todayStr).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+  const evs = getEventsOnDate(todayStr).sort((a, b) => (a.startTime||'').localeCompare(b.startTime||''));
   const evEl = document.getElementById('dash-events');
-  if(!evs.length) { evEl.innerHTML='<li style="color:var(--text-muted);font-size:13px;">No events today.</li>'; }
-  else {
-    evEl.innerHTML = evs.map(e=>`
+  if (!evs.length) {
+    evEl.innerHTML = '<li style="color:var(--text-muted);font-size:13px;">No events today.</li>';
+  } else {
+    evEl.innerHTML = evs.map(e => `
       <li>
         <span class="dot dot-${catClass(e.cat)}"></span>
         <div style="flex:1">
           <div>${e.title}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${e.startTime?fmtTime(e.startTime)+(e.endTime?' – '+fmtTime(e.endTime):''):'All day'}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${e.startTime ? fmtTime(e.startTime) + (e.endTime ? ' – ' + fmtTime(e.endTime) : '') : 'All day'}</div>
         </div>
       </li>`).join('');
   }
 
-  // Breakdown
   const cats = ['Work','Personal','Health','Study / Course','Others'];
   const total = tasks.length || 1;
-  document.getElementById('dash-breakdown').innerHTML = cats.map(c=>{
-    const count = tasks.filter(t=>t.cat===c).length;
-    const pct = Math.round(count/total*100);
-    return `<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${c}</span><span style="color:var(--text-muted)">${count} task${count!==1?'s':''}</span></div><div class="progress-bar"><div class="progress-fill bg-${catClass(c)}" style="width:${pct}%"></div></div></div>`;
+  document.getElementById('dash-breakdown').innerHTML = cats.map(c => {
+    const count = tasks.filter(t => t.cat === c).length;
+    const pct = Math.round(count / total * 100);
+    return `<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${c}</span><span style="color:var(--text-muted)">${count} task${count !== 1 ? 's' : ''}</span></div><div class="progress-bar"><div class="progress-fill bg-${catClass(c)}" style="width:${pct}%"></div></div></div>`;
   }).join('');
 }
 
@@ -591,39 +631,42 @@ let editingTaskId = null;
 
 function renderTasks() {
   const tasks = loadTasks();
-  const search = (document.getElementById('task-search')?.value||'').toLowerCase();
-  const cat = document.getElementById('task-filter-cat')?.value||'';
-  const status = document.getElementById('task-filter-status')?.value||'';
-  const pri = document.getElementById('task-filter-pri')?.value||'';
+  const search = (document.getElementById('task-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('task-filter-cat')?.value || '';
+  const status = document.getElementById('task-filter-status')?.value || '';
+  const pri = document.getElementById('task-filter-pri')?.value || '';
   const todayStr = today();
 
-  let filtered = tasks.filter(t=>{
-    if(search && !t.title.toLowerCase().includes(search) && !(t.stream||'').toLowerCase().includes(search)) return false;
-    if(cat && t.cat!==cat) return false;
-    if(status && t.status!==status) return false;
-    if(pri && t.pri!==pri) return false;
+  let filtered = tasks.filter(t => {
+    if (search && !t.title.toLowerCase().includes(search) && !(t.stream||'').toLowerCase().includes(search)) return false;
+    if (cat && t.cat !== cat) return false;
+    if (status && t.status !== status) return false;
+    if (pri && t.pri !== pri) return false;
     return true;
   });
 
-  filtered.sort((a,b)=>{
-    const pd={'High':0,'Medium':1,'Low':2};
-    if((a.due||'')!=(b.due||'')) return (a.due||'9999').localeCompare(b.due||'9999');
-    return (pd[a.pri]||1)-(pd[b.pri]||1);
+  filtered.sort((a, b) => {
+    const pd = {'High':0,'Medium':1,'Low':2};
+    if ((a.due||'') !== (b.due||'')) return (a.due||'9999').localeCompare(b.due||'9999');
+    return (pd[a.pri]||1) - (pd[b.pri]||1);
   });
 
   const tbody = document.getElementById('task-tbody');
-  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state">No tasks found. Add one above.</div></td></tr>`;return;}
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No tasks found. Add one above.</div></td></tr>`;
+    return;
+  }
 
-  tbody.innerHTML = filtered.map(t=>{
-    const overdue = t.status!=='Done'&&t.due&&t.due<todayStr;
+  tbody.innerHTML = filtered.map(t => {
+    const overdue = t.status !== 'Done' && t.due && t.due < todayStr;
     const rolled = t.rolledFrom ? `<div class="rolled-over">Rolled from ${fmtDate(t.rolledFrom)}</div>` : '';
     const linkedTag = t.linkedEvent ? `<div class="linked-event-tag">&#8594; ${t.linkedEvent}</div>` : '';
     return `<tr>
       <td><div class="task-title">${t.title}</div><div class="task-meta">${t.stream||''}</div>${rolled}${linkedTag}</td>
       <td><span class="badge badge-${catClass(t.cat)}">${t.cat}</span></td>
       <td><span class="badge badge-${(t.pri||'medium').toLowerCase()}">${t.pri||'Medium'}</span></td>
-      <td style="${overdue?'color:var(--high)':''}">${fmtDate(t.start)}</td>
-      <td style="${overdue?'color:var(--high)':''}">${fmtDate(t.due)}</td>
+      <td style="${overdue ? 'color:var(--high)' : ''}">${fmtDate(t.start)}</td>
+      <td style="${overdue ? 'color:var(--high)' : ''}">${fmtDate(t.due)}</td>
       <td><select class="status-select" onchange="updateTaskStatus('${t.id}',this.value)">
         <option${t.status==='To Do'?' selected':''}>To Do</option>
         <option${t.status==='In Progress'?' selected':''}>In Progress</option>
@@ -639,34 +682,34 @@ function renderTasks() {
 
 function updateTaskStatus(id, val) {
   const tasks = loadTasks();
-  const t = tasks.find(x=>x.id===id);
-  if(t){ t.status=val; saveTasks(tasks); }
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.status = val; saveTasks(tasks); }
 }
 
 function openTaskModal(id) {
-  editingTaskId = id||null;
-  document.getElementById('task-modal-title').textContent = id?'Edit Task':'Add Task';
-  document.getElementById('task-edit-id').value = id||'';
-  if(id){
-    const t = loadTasks().find(x=>x.id===id);
-    if(!t) return;
-    document.getElementById('t-title').value=t.title||'';
-    document.getElementById('t-cat').value=t.cat||'Work';
-    document.getElementById('t-stream').value=t.stream||'';
-    document.getElementById('t-pri').value=t.pri||'Medium';
-    document.getElementById('t-status').value=t.status||'To Do';
-    document.getElementById('t-start').value=t.start||'';
-    document.getElementById('t-due').value=t.due||'';
-    document.getElementById('t-notes').value=t.notes||'';
+  editingTaskId = id || null;
+  document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Add Task';
+  document.getElementById('task-edit-id').value = id || '';
+  if (id) {
+    const t = loadTasks().find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('t-title').value = t.title || '';
+    document.getElementById('t-cat').value = t.cat || 'Work';
+    document.getElementById('t-stream').value = t.stream || '';
+    document.getElementById('t-pri').value = t.pri || 'Medium';
+    document.getElementById('t-status').value = t.status || 'To Do';
+    document.getElementById('t-start').value = t.start || '';
+    document.getElementById('t-due').value = t.due || '';
+    document.getElementById('t-notes').value = t.notes || '';
   } else {
-    document.getElementById('t-title').value='';
-    document.getElementById('t-cat').value='Work';
-    document.getElementById('t-stream').value='';
-    document.getElementById('t-pri').value='Medium';
-    document.getElementById('t-status').value='To Do';
-    document.getElementById('t-start').value='';
-    document.getElementById('t-due').value='';
-    document.getElementById('t-notes').value='';
+    document.getElementById('t-title').value = '';
+    document.getElementById('t-cat').value = 'Work';
+    document.getElementById('t-stream').value = '';
+    document.getElementById('t-pri').value = 'Medium';
+    document.getElementById('t-status').value = 'To Do';
+    document.getElementById('t-start').value = '';
+    document.getElementById('t-due').value = '';
+    document.getElementById('t-notes').value = '';
   }
   document.getElementById('task-modal').classList.add('open');
 }
@@ -675,7 +718,7 @@ function closeTaskModal() { document.getElementById('task-modal').classList.remo
 
 function saveTask() {
   const title = document.getElementById('t-title').value.trim();
-  if(!title){alert('Please enter a task title.');return;}
+  if (!title) { alert('Please enter a task title.'); return; }
   const tasks = loadTasks();
   const id = editingTaskId || uid();
   const obj = {
@@ -688,9 +731,9 @@ function saveTask() {
     due: document.getElementById('t-due').value,
     notes: document.getElementById('t-notes').value.trim()
   };
-  if(editingTaskId){
-    const idx=tasks.findIndex(x=>x.id===editingTaskId);
-    if(idx>-1){ const old=tasks[idx]; obj.rolledFrom=old.rolledFrom; obj.linkedEvent=old.linkedEvent; tasks[idx]=obj; }
+  if (editingTaskId) {
+    const idx = tasks.findIndex(x => x.id === editingTaskId);
+    if (idx > -1) { const old = tasks[idx]; obj.rolledFrom = old.rolledFrom; obj.linkedEvent = old.linkedEvent; tasks[idx] = obj; }
   } else { tasks.push(obj); }
   saveTasks(tasks);
   closeTaskModal();
@@ -698,9 +741,8 @@ function saveTask() {
 }
 
 function deleteTask(id) {
-  if(!confirm('Delete this task?')) return;
-  const tasks = loadTasks().filter(t=>t.id!==id);
-  saveTasks(tasks);
+  if (!confirm('Delete this task?')) return;
+  saveTasks(loadTasks().filter(t => t.id !== id));
   renderTasks();
 }
 
@@ -708,8 +750,8 @@ function checkRollovers() {
   const tasks = loadTasks();
   const todayStr = today();
   let count = 0;
-  tasks.forEach(t=>{
-    if(t.status!=='Done'&&t.due&&t.due<todayStr){
+  tasks.forEach(t => {
+    if (t.status !== 'Done' && t.due && t.due < todayStr) {
       t.rolledFrom = t.rolledFrom || t.due;
       t.due = todayStr;
       count++;
@@ -717,66 +759,69 @@ function checkRollovers() {
   });
   saveTasks(tasks);
   renderTasks();
-  if(count) alert(count+' task(s) rolled over to today.');
+  if (count) alert(count + ' task(s) rolled over to today.');
   else alert('No overdue tasks to roll over.');
 }
 
 // ─── WEEK VIEW ───────────────────────────────────────────────────────────────
 let weekOffset = 0;
-const HOURS = Array.from({length:16},(_,i)=>i+7); // 7am to 10pm
+const HOURS = Array.from({length:16}, (_, i) => i + 7); // 7am to 10pm
 
 function renderWeek() {
   const todayStr = today();
-  const todayDate = new Date(todayStr);
+  const tp = todayStr.split('-');
+  const todayDate = new Date(+tp[0], +tp[1]-1, +tp[2]);
   const weekStart = new Date(todayDate);
   const dow = weekStart.getDay();
-  weekStart.setDate(weekStart.getDate() - (dow===0?6:dow-1) + weekOffset*7);
-  const weekDays = Array.from({length:7},(_,i)=>{ const d=new Date(weekStart); d.setDate(d.getDate()+i); return d.toISOString().slice(0,10); });
+  weekStart.setDate(weekStart.getDate() - (dow === 0 ? 6 : dow - 1) + weekOffset * 7);
+
+  const weekDays = Array.from({length:7}, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return localDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+  });
 
   const fromDate = weekDays[0], toDate = weekDays[6];
-  document.getElementById('week-label').textContent = fmtDate(fromDate)+' – '+fmtDate(toDate);
+  document.getElementById('week-label').textContent = fmtDate(fromDate) + ' – ' + fmtDate(toDate);
 
   const events = getEventsInRange(fromDate, toDate);
   const grid = document.getElementById('week-grid');
-
-  // Headers
   const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
   let html = '<div class="week-header"></div>';
-  weekDays.forEach((d,i)=>{
-    const isToday = d===todayStr;
-    const dt = new Date(d);
-    html += `<div class="week-header${isToday?' today-col':''}">${dayNames[i]}<br><span style="font-size:14px;font-weight:700;">${dt.getDate()}</span></div>`;
+  weekDays.forEach((d, i) => {
+    const isToday = d === todayStr;
+    const dp = d.split('-');
+    html += `<div class="week-header${isToday ? ' today-col' : ''}">${dayNames[i]}<br><span style="font-size:14px;font-weight:700;">${+dp[2]}</span></div>`;
   });
 
-  // All-day row
   html += '<div class="week-time-label" style="font-size:10px;">All day</div>';
-  weekDays.forEach(d=>{
-    const allDay = events.filter(e=>e.date===d&&(!e.startTime||e.isHoliday));
-    html += `<div class="all-day-row">${allDay.map(e=>`<span class="badge badge-${catClass(e.cat)}" style="font-size:10px;">${e.title}</span>`).join('')}</div>`;
+  weekDays.forEach(d => {
+    const allDay = events.filter(e => e.date === d && (!e.startTime || e.isHoliday));
+    html += `<div class="all-day-row">${allDay.map(e => `<span class="badge badge-${catClass(e.cat)}" style="font-size:10px;">${e.title}</span>`).join('')}</div>`;
   });
 
-  // Time rows
-  HOURS.forEach(h=>{
-    const label = h===12?'12pm':h<12?h+'am':(h-12)+'pm';
+  HOURS.forEach(h => {
+    const label = h === 12 ? '12pm' : h < 12 ? h + 'am' : (h - 12) + 'pm';
     html += `<div class="week-time-label">${label}</div>`;
-    weekDays.forEach(d=>{
-      const cellEvents = events.filter(e=>{
-        if(!e.startTime||e.isHoliday) return false;
+    weekDays.forEach(d => {
+      const cellEvents = events.filter(e => {
+        if (!e.startTime || e.isHoliday) return false;
         const eh = parseInt(e.startTime.split(':')[0]);
-        return e.date===d && eh===h;
+        return e.date === d && eh === h;
       });
       let cellHtml = '';
-      cellEvents.forEach(e=>{
-        const topPct = (parseInt(e.startTime.split(':')[1])/60)*100;
-        const startMins = parseInt(e.startTime.split(':')[0])*60+parseInt(e.startTime.split(':')[1]);
-        let endMins = e.endTime ? parseInt(e.endTime.split(':')[0])*60+parseInt(e.endTime.split(':')[1]) : startMins+60;
-        const durMins = Math.max(endMins-startMins, 30);
-        const heightPct = (durMins/60)*100;
+      cellEvents.forEach(e => {
+        const topPct = (parseInt(e.startTime.split(':')[1]) / 60) * 100;
+        const startMins = parseInt(e.startTime.split(':')[0]) * 60 + parseInt(e.startTime.split(':')[1]);
+        let endMins = e.endTime ? parseInt(e.endTime.split(':')[0]) * 60 + parseInt(e.endTime.split(':')[1]) : startMins + 60;
+        const durMins = Math.max(endMins - startMins, 30);
+        const heightPct = (durMins / 60) * 100;
         const cat = catClass(e.cat);
         const streamLabel = e.stream ? `<div class="ev-stream">${e.stream}</div>` : '';
         cellHtml += `<div class="week-event-block bg-${cat}" style="top:${topPct}%;height:${heightPct}%;" onclick='openEventModal("${e.id}","${e.date}")'>
           <div class="ev-title">${e.title}</div>${streamLabel}
-          <div class="ev-time">${fmtTime(e.startTime)}${e.endTime?' – '+fmtTime(e.endTime):''}</div>
+          <div class="ev-time">${fmtTime(e.startTime)}${e.endTime ? ' – ' + fmtTime(e.endTime) : ''}</div>
         </div>`;
       });
       html += `<div class="week-cell" onclick="openEventModal(null,'${d}')">${cellHtml}</div>`;
@@ -792,152 +837,167 @@ let selectedCalDate = null;
 
 function renderCalendar() {
   const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth();
-  const tgt = new Date(y, m+calOffset, 1);
-  const tgtY = tgt.getFullYear(), tgtM = tgt.getMonth();
-  document.getElementById('cal-label').textContent = tgt.toLocaleDateString('en-SG',{month:'long',year:'numeric'});
+  const baseY = now.getFullYear(), baseM = now.getMonth();
 
-  const firstDay = new Date(tgtY,tgtM,1).getDay();
-  const startOffset = firstDay===0?6:firstDay-1;
-  const daysInMonth = new Date(tgtY,tgtM+1,0).getDate();
+  // Calculate target month using integer arithmetic — no UTC conversion
+  let tgtM = baseM + calOffset;
+  let tgtY = baseY + Math.floor(tgtM / 12);
+  tgtM = ((tgtM % 12) + 12) % 12;
+
+  document.getElementById('cal-label').textContent =
+    new Date(tgtY, tgtM, 1).toLocaleDateString('en-SG', {month:'long', year:'numeric'});
+
+  const firstDayOfMonth = new Date(tgtY, tgtM, 1).getDay(); // 0=Sun
+  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Mon-based
+  const daysInMonth = new Date(tgtY, tgtM + 1, 0).getDate();
   const todayStr = today();
   const tasks = loadTasks();
 
-  const fromDate = new Date(tgtY,tgtM,1-startOffset).toISOString().slice(0,10);
-  const toDate = new Date(tgtY,tgtM+1,7).toISOString().slice(0,10);
-  const allEvents = getEventsInRange(fromDate,toDate);
+  // Build range for event fetching
+  const fromDate = localDateStr(
+    new Date(tgtY, tgtM, 1 - startOffset).getFullYear(),
+    new Date(tgtY, tgtM, 1 - startOffset).getMonth(),
+    new Date(tgtY, tgtM, 1 - startOffset).getDate()
+  );
+  const toDate = localDateStr(tgtY, tgtM + 1, 7); // safe overshoot for trailing cells
 
-  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  let html = dayNames.map(d=>`<div class="cal-header-cell">${d}</div>`).join('');
+  const allEvents = getEventsInRange(fromDate, toDate);
 
-  for(let i=0;i<startOffset;i++){
-    const d=new Date(tgtY,tgtM,1-startOffset+i);
-    html+=`<div class="cal-cell other-month"><div class="cal-day-num">${d.getDate()}</div></div>`;
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html = dayNames.map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+
+  // Leading cells from previous month
+  for (let i = 0; i < startOffset; i++) {
+    const d = new Date(tgtY, tgtM, 1 - startOffset + i);
+    html += `<div class="cal-cell other-month"><div class="cal-day-num">${d.getDate()}</div></div>`;
   }
-  for(let day=1;day<=daysInMonth;day++){
-    const d=new Date(tgtY,tgtM,day);
-    const ds=d.toISOString().slice(0,10);
-    const isToday=ds===todayStr;
-    const isSel=ds===selectedCalDate;
-    const dayEvents=allEvents.filter(e=>e.date===ds).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
-    const taskCount=tasks.filter(t=>t.due===ds&&t.status!=='Done').length;
-    const evDots=dayEvents.slice(0,3).map(e=>`<div class="cal-event-dot bg-${catClass(e.cat)}" title="${e.title}">${e.startTime?fmtTime(e.startTime)+' ':''} ${e.title}</div>`).join('');
-    const more=dayEvents.length>3?`<div class="cal-task-count">+${dayEvents.length-3} more</div>`:'';
-    const taskBadge=taskCount?`<div class="cal-task-count">${taskCount} task${taskCount>1?'s':''}</div>`:'';
-    html+=`<div class="cal-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectCalDate('${ds}')">
+
+  // Days of current month — use localDateStr to avoid UTC shift
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = localDateStr(tgtY, tgtM, day);
+    const isToday = ds === todayStr;
+    const isSel = ds === selectedCalDate;
+    const dayEvents = allEvents.filter(e => e.date === ds).sort((a, b) => (a.startTime||'').localeCompare(b.startTime||''));
+    const taskCount = tasks.filter(t => t.due === ds && t.status !== 'Done').length;
+    const evDots = dayEvents.slice(0, 3).map(e =>
+      `<div class="cal-event-dot bg-${catClass(e.cat)}" title="${e.title}">${e.startTime ? fmtTime(e.startTime) + ' ' : ''}${e.title}</div>`
+    ).join('');
+    const more = dayEvents.length > 3 ? `<div class="cal-task-count">+${dayEvents.length - 3} more</div>` : '';
+    const taskBadge = taskCount ? `<div class="cal-task-count">${taskCount} task${taskCount > 1 ? 's' : ''}</div>` : '';
+    html += `<div class="cal-cell${isToday ? ' today' : ''}${isSel ? ' selected' : ''}" onclick="selectCalDate('${ds}')">
       <div class="cal-day-num">${day}</div>${evDots}${more}${taskBadge}
     </div>`;
   }
-  const remaining=(7-((startOffset+daysInMonth)%7))%7;
-  for(let i=1;i<=remaining;i++){
-    html+=`<div class="cal-cell other-month"><div class="cal-day-num">${i}</div></div>`;
+
+  // Trailing cells
+  const remaining = (7 - ((startOffset + daysInMonth) % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-cell other-month"><div class="cal-day-num">${i}</div></div>`;
   }
 
-  document.getElementById('cal-grid').innerHTML=html;
-  if(selectedCalDate) showCalDetail(selectedCalDate);
+  document.getElementById('cal-grid').innerHTML = html;
+  if (selectedCalDate) showCalDetail(selectedCalDate);
 }
 
 function selectCalDate(ds) {
-  selectedCalDate=ds;
+  selectedCalDate = ds;
   renderCalendar();
   showCalDetail(ds);
 }
 
 function showCalDetail(ds) {
-  const el=document.getElementById('cal-detail');
-  const events=getEventsOnDate(ds).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
-  const tasks=loadTasks().filter(t=>t.due===ds);
-  let html=`<div class="card-title">${fmtDate(ds)}</div>`;
-  if(!events.length&&!tasks.length){html+='<p style="color:var(--text-muted);font-size:13px;">Nothing on this day.</p>';}
-  if(events.length){
-    html+='<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">EVENTS</div>';
-    html+=events.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+  const el = document.getElementById('cal-detail');
+  const events = getEventsOnDate(ds).sort((a, b) => (a.startTime||'').localeCompare(b.startTime||''));
+  const tasks = loadTasks().filter(t => t.due === ds);
+  let html = `<div class="card-title">${fmtDate(ds)}</div>`;
+  if (!events.length && !tasks.length) { html += '<p style="color:var(--text-muted);font-size:13px;">Nothing on this day.</p>'; }
+  if (events.length) {
+    html += '<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">EVENTS</div>';
+    html += events.map(e => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
       <span class="dot dot-${catClass(e.cat)}"></span>
-      <div style="flex:1"><div>${e.title}${e.recur&&e.recur!=='none'?'<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">Recurring</span>':''}</div>
-      <div style="font-size:11px;color:var(--text-muted)">${e.startTime?fmtTime(e.startTime)+(e.endTime?' – '+fmtTime(e.endTime):''):'All day'}${e.stream?' · '+e.stream:''}</div></div>
-      ${!e.isHoliday?`<button class="btn btn-secondary btn-sm" onclick='openEventModal("${e.id}","${ds}")'>Edit</button>`:''}
-    </div>`).join('')+'</div>';
+      <div style="flex:1"><div>${e.title}${e.recur && e.recur !== 'none' ? '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">Recurring</span>' : ''}</div>
+      <div style="font-size:11px;color:var(--text-muted)">${e.startTime ? fmtTime(e.startTime) + (e.endTime ? ' – ' + fmtTime(e.endTime) : '') : 'All day'}${e.stream ? ' · ' + e.stream : ''}</div></div>
+      ${!e.isHoliday ? `<button class="btn btn-secondary btn-sm" onclick='openEventModal("${e.id}","${ds}")'>Edit</button>` : ''}
+    </div>`).join('') + '</div>';
   }
-  if(tasks.length){
-    html+='<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">TASKS DUE</div>';
-    html+=tasks.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+  if (tasks.length) {
+    html += '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">TASKS DUE</div>';
+    html += tasks.map(t => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
       <span class="dot dot-${catClass(t.cat)}"></span>
       <div style="flex:1"><div>${t.title}</div><div style="font-size:11px;color:var(--text-muted)">${t.stream||''}</div></div>
       <span class="badge badge-${(t.pri||'medium').toLowerCase()}">${t.pri||'Medium'}</span>
       <span class="badge badge-${t.status==='Done'?'low':t.status==='In Progress'?'medium':'high'}">${t.status}</span>
-    </div>`).join('')+'</div>';
+    </div>`).join('') + '</div>';
   }
-  el.innerHTML=html;
-  el.style.display='block';
+  el.innerHTML = html;
+  el.style.display = 'block';
 }
 
 // ─── GANTT ───────────────────────────────────────────────────────────────────
 let ganttOffset = 0;
 
 function renderGantt() {
-  const tasks = loadTasks().filter(t=>t.start&&t.due);
-  const cat = document.getElementById('gantt-filter-cat')?.value||'';
-  const filtered = cat ? tasks.filter(t=>t.cat===cat) : tasks;
+  const tasks = loadTasks().filter(t => t.start && t.due);
+  const cat = document.getElementById('gantt-filter-cat')?.value || '';
+  const filtered = cat ? tasks.filter(t => t.cat === cat) : tasks;
 
   const baseDate = addDays(today(), ganttOffset);
   const numWeeks = 10;
   const numDays = numWeeks * 7;
   const endDate = addDays(baseDate, numDays);
 
-  document.getElementById('gantt-label').textContent = fmtDate(baseDate)+' – '+fmtDate(endDate);
+  document.getElementById('gantt-label').textContent = fmtDate(baseDate) + ' – ' + fmtDate(endDate);
 
-  // Week labels
   const weekLabels = [];
-  for(let i=0;i<numWeeks;i++) weekLabels.push(addDays(baseDate,i*7));
+  for (let i = 0; i < numWeeks; i++) weekLabels.push(addDays(baseDate, i * 7));
 
-  if(!filtered.length){
-    document.getElementById('gantt-wrap').innerHTML='<div class="empty-state">No tasks with start and due dates found.</div>';
+  if (!filtered.length) {
+    document.getElementById('gantt-wrap').innerHTML = '<div class="empty-state">No tasks with start and due dates found.</div>';
     return;
   }
 
   const todayStr = today();
-  const todayOffset = diffDays(baseDate, todayStr);
-  const todayPct = Math.max(0,Math.min(100,(todayOffset/numDays)*100));
+  const todayOff = diffDays(baseDate, todayStr);
+  const todayPct = Math.max(0, Math.min(100, (todayOff / numDays) * 100));
 
   let html = `<table class="gantt-table"><thead><tr>
     <th style="width:22%">Task</th><th style="width:10%">Category</th><th style="width:10%">Priority</th>
     <th style="width:9%">Start</th><th style="width:9%">Due</th><th class="gantt-bar-cell">Timeline (${numWeeks} weeks)</th>
   </tr></thead><tbody>`;
 
-  filtered.forEach(t=>{
+  filtered.forEach(t => {
     const startOff = diffDays(baseDate, t.start);
     const endOff = diffDays(baseDate, t.due);
-    const startPct = Math.max(0,(startOff/numDays)*100);
-    const endPct = Math.min(100,(endOff/numDays)*100);
-    const widthPct = Math.max(0.5, endPct-startPct);
+    const startPct = Math.max(0, (startOff / numDays) * 100);
+    const endPct = Math.min(100, (endOff / numDays) * 100);
+    const widthPct = Math.max(0.5, endPct - startPct);
     const cat2 = catClass(t.cat);
-    const overdue = t.status!=='Done'&&t.due<todayStr;
+    const overdue = t.status !== 'Done' && t.due < todayStr;
 
-    // Week tick marks
-    const ticks = weekLabels.map((w,i)=>{
-      const pct=(i/numWeeks)*100;
+    const ticks = weekLabels.map((w, i) => {
+      const pct = (i / numWeeks) * 100;
       return `<div style="position:absolute;top:0;bottom:0;left:${pct}%;width:1px;background:var(--border);"></div>
               <div class="gantt-week-label" style="left:${pct}%">${fmtDate(w).slice(0,5)}</div>`;
     }).join('');
 
-    html+=`<tr>
+    html += `<tr>
       <td><div class="task-title" style="font-size:12px;">${t.title}</div><div class="task-meta">${t.stream||''}</div></td>
       <td><span class="badge badge-${cat2}">${t.cat}</span></td>
       <td><span class="badge badge-${(t.pri||'medium').toLowerCase()}">${t.pri||'Medium'}</span></td>
       <td style="font-size:11px;">${fmtDate(t.start)}</td>
-      <td style="font-size:11px;${overdue?'color:var(--high)':''}">${fmtDate(t.due)}</td>
+      <td style="font-size:11px;${overdue ? 'color:var(--high)' : ''}">${fmtDate(t.due)}</td>
       <td class="gantt-bar-cell">
         <div class="gantt-bar-bg" style="margin-top:18px;">
           ${ticks}
           <div class="gantt-today-line" style="left:${todayPct}%"></div>
-          <div class="gantt-bar bg-${cat2}" style="left:${startPct}%;width:${widthPct}%;${overdue?'opacity:0.5;':''}" title="${t.title}: ${fmtDate(t.start)} – ${fmtDate(t.due)}"></div>
+          <div class="gantt-bar bg-${cat2}" style="left:${startPct}%;width:${widthPct}%;${overdue ? 'opacity:0.5;' : ''}" title="${t.title}: ${fmtDate(t.start)} – ${fmtDate(t.due)}"></div>
         </div>
       </td>
     </tr>`;
   });
 
-  html+='</tbody></table>';
-  document.getElementById('gantt-wrap').innerHTML=html;
+  html += '</tbody></table>';
+  document.getElementById('gantt-wrap').innerHTML = html;
 }
 
 // ─── EVENT MODAL ─────────────────────────────────────────────────────────────
@@ -946,46 +1006,45 @@ let editingEventOccurrence = null;
 let linkedTaskRows = [];
 
 function openEventModal(id, date) {
-  editingEventId = id||null;
-  editingEventOccurrence = date||null;
+  editingEventId = id || null;
+  editingEventOccurrence = date || null;
   linkedTaskRows = [];
-  document.getElementById('linked-tasks-container').innerHTML='';
-  document.getElementById('event-modal-title').textContent = id?'Edit Event':'Add Event';
-  document.getElementById('event-delete-btn').style.display = id?'inline-flex':'none';
+  document.getElementById('linked-tasks-container').innerHTML = '';
+  document.getElementById('event-modal-title').textContent = id ? 'Edit Event' : 'Add Event';
+  document.getElementById('event-delete-btn').style.display = id ? 'inline-flex' : 'none';
 
-  if(id){
-    const ev = loadEvents().find(x=>x.id===id);
-    if(!ev) return;
-    document.getElementById('e-title').value=ev.title||'';
-    document.getElementById('e-cat').value=ev.cat||'Work';
-    document.getElementById('e-stream').value=ev.stream||'';
-    document.getElementById('e-date').value=date||ev.date||'';
-    document.getElementById('e-enddate').value=ev.endDate||'';
-    document.getElementById('e-start').value=ev.startTime||'';
-    document.getElementById('e-end').value=ev.endTime||'';
-    document.getElementById('e-notes').value=ev.notes||'';
-    document.getElementById('e-recur').value=ev.recur||'none';
-    document.getElementById('e-recur-end').value=ev.recurEnd||'';
+  if (id) {
+    const ev = loadEvents().find(x => x.id === id);
+    if (!ev) return;
+    document.getElementById('e-title').value = ev.title || '';
+    document.getElementById('e-cat').value = ev.cat || 'Work';
+    document.getElementById('e-stream').value = ev.stream || '';
+    document.getElementById('e-date').value = date || ev.date || '';
+    document.getElementById('e-enddate').value = ev.endDate || '';
+    document.getElementById('e-start').value = ev.startTime || '';
+    document.getElementById('e-end').value = ev.endTime || '';
+    document.getElementById('e-notes').value = ev.notes || '';
+    document.getElementById('e-recur').value = ev.recur || 'none';
+    document.getElementById('e-recur-end').value = ev.recurEnd || '';
     toggleRecurOptions();
-    // Load linked tasks
-    if(ev.linkedTaskIds&&ev.linkedTaskIds.length){
-      const tasks=loadTasks();
-      ev.linkedTaskIds.forEach(tid=>{
-        const t=tasks.find(x=>x.id===tid);
-        if(t) addLinkedTaskRow(t);
+    if (ev.linkedTaskIds && ev.linkedTaskIds.length) {
+      const tasks = loadTasks();
+      ev.linkedTaskIds.forEach(tid => {
+        const t = tasks.find(x => x.id === tid);
+        if (t) addLinkedTaskRow(t);
       });
     }
   } else {
-    document.getElementById('e-title').value='';
-    document.getElementById('e-cat').value='Work';
-    document.getElementById('e-stream').value='';
-    document.getElementById('e-date').value=date||'';
-    document.getElementById('e-enddate').value='';
-    document.getElementById('e-start').value='';
-    document.getElementById('e-end').value='';
-    document.getElementById('e-notes').value='';
-    document.getElementById('e-recur').value='none';
-    document.getElementById('e-recur-end').value='';
+    document.getElementById('e-title').value = '';
+    document.getElementById('e-cat').value = 'Work';
+    document.getElementById('e-stream').value = '';
+    document.getElementById('e-date').value = date || '';
+    document.getElementById('e-enddate').value = '';
+    document.getElementById('e-start').value = '';
+    document.getElementById('e-end').value = '';
+    document.getElementById('e-notes').value = '';
+    document.getElementById('e-recur').value = 'none';
+    document.getElementById('e-recur-end').value = '';
     toggleRecurOptions();
   }
   document.getElementById('event-modal').classList.add('open');
@@ -995,23 +1054,23 @@ function closeEventModal() { document.getElementById('event-modal').classList.re
 
 function toggleRecurOptions() {
   const val = document.getElementById('e-recur').value;
-  document.getElementById('recur-options').style.display = val==='none'?'none':'block';
+  document.getElementById('recur-options').style.display = val === 'none' ? 'none' : 'block';
 }
 
 function addLinkedTaskRow(existing) {
   const rowId = uid();
-  const row = {rowId, id: existing?.id||null};
+  const row = {rowId, id: existing?.id || null};
   linkedTaskRows.push(row);
   const container = document.getElementById('linked-tasks-container');
   const div = document.createElement('div');
-  div.className='linked-task-item';
-  div.id='ltr-'+rowId;
-  div.innerHTML=`
+  div.className = 'linked-task-item';
+  div.id = 'ltr-' + rowId;
+  div.innerHTML = `
     <button class="remove-linked" onclick="removeLinkedTaskRow('${rowId}')">&times;</button>
     <div class="form-row">
       <div class="form-group"><label>Task Title *</label><input type="text" id="lt-title-${rowId}" value="${existing?.title||''}" placeholder="Task title"></div>
       <div class="form-group"><label>Category</label><select id="lt-cat-${rowId}">
-        <option${existing?.cat==='Work'?' selected':''}>Work</option>
+        <option${existing?.cat==='Work'||!existing?' selected':''}>Work</option>
         <option${existing?.cat==='Personal'?' selected':''}>Personal</option>
         <option${existing?.cat==='Health'?' selected':''}>Health</option>
         <option${existing?.cat==='Study / Course'?' selected':''}>Study / Course</option>
@@ -1030,37 +1089,36 @@ function addLinkedTaskRow(existing) {
 }
 
 function removeLinkedTaskRow(rowId) {
-  linkedTaskRows = linkedTaskRows.filter(r=>r.rowId!==rowId);
-  const el = document.getElementById('ltr-'+rowId);
-  if(el) el.remove();
+  linkedTaskRows = linkedTaskRows.filter(r => r.rowId !== rowId);
+  const el = document.getElementById('ltr-' + rowId);
+  if (el) el.remove();
 }
 
 function saveEvent() {
   const title = document.getElementById('e-title').value.trim();
   const date = document.getElementById('e-date').value;
   const startTime = document.getElementById('e-start').value;
-  if(!title){alert('Please enter an event title.');return;}
-  if(!date){alert('Please enter a date.');return;}
-  if(!startTime){alert('Please enter a start time.');return;}
+  if (!title) { alert('Please enter an event title.'); return; }
+  if (!date) { alert('Please enter a date.'); return; }
+  if (!startTime) { alert('Please enter a start time.'); return; }
 
   const events = loadEvents();
   const id = editingEventId || uid();
   const evTitle = title;
 
-  // Handle linked tasks
   const tasks = loadTasks();
   const linkedTaskIds = [];
-  linkedTaskRows.forEach(row=>{
-    const t_title = document.getElementById('lt-title-'+row.rowId)?.value?.trim();
-    if(!t_title) return;
-    const t_cat = document.getElementById('lt-cat-'+row.rowId)?.value||'Work';
-    const t_pri = document.getElementById('lt-pri-'+row.rowId)?.value||'Medium';
-    const t_due = document.getElementById('lt-due-'+row.rowId)?.value||'';
-    if(row.id){
-      const idx=tasks.findIndex(x=>x.id===row.id);
-      if(idx>-1){ tasks[idx]={...tasks[idx],title:t_title,cat:t_cat,pri:t_pri,due:t_due,linkedEvent:evTitle}; linkedTaskIds.push(row.id); }
+  linkedTaskRows.forEach(row => {
+    const t_title = document.getElementById('lt-title-' + row.rowId)?.value?.trim();
+    if (!t_title) return;
+    const t_cat = document.getElementById('lt-cat-' + row.rowId)?.value || 'Work';
+    const t_pri = document.getElementById('lt-pri-' + row.rowId)?.value || 'Medium';
+    const t_due = document.getElementById('lt-due-' + row.rowId)?.value || '';
+    if (row.id) {
+      const idx = tasks.findIndex(x => x.id === row.id);
+      if (idx > -1) { tasks[idx] = {...tasks[idx], title:t_title, cat:t_cat, pri:t_pri, due:t_due, linkedEvent:evTitle}; linkedTaskIds.push(row.id); }
     } else {
-      const newTask={id:uid(),title:t_title,cat:t_cat,pri:t_pri,due:t_due,status:'To Do',linkedEvent:evTitle,start:''};
+      const newTask = {id:uid(), title:t_title, cat:t_cat, pri:t_pri, due:t_due, status:'To Do', linkedEvent:evTitle, start:''};
       tasks.push(newTask);
       linkedTaskIds.push(newTask.id);
     }
@@ -1077,32 +1135,32 @@ function saveEvent() {
     recur: document.getElementById('e-recur').value,
     recurEnd: document.getElementById('e-recur-end').value,
     linkedTaskIds,
-    exceptions: editingEventId ? (events.find(x=>x.id===editingEventId)?.exceptions||[]) : []
+    exceptions: editingEventId ? (events.find(x => x.id === editingEventId)?.exceptions || []) : []
   };
 
-  if(editingEventId){
-    const idx=events.findIndex(x=>x.id===editingEventId);
-    if(idx>-1) events[idx]=obj; else events.push(obj);
+  if (editingEventId) {
+    const idx = events.findIndex(x => x.id === editingEventId);
+    if (idx > -1) events[idx] = obj; else events.push(obj);
   } else { events.push(obj); }
   saveEvents(events);
   closeEventModal();
   renderWeek();
-  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
 
 // ─── DELETE EVENT ────────────────────────────────────────────────────────────
 function deleteEventPrompt() {
   const events = loadEvents();
-  const ev = events.find(x=>x.id===editingEventId);
-  if(!ev) return;
+  const ev = events.find(x => x.id === editingEventId);
+  if (!ev) return;
   closeEventModal();
-  if(ev.recur&&ev.recur!=='none'){
+  if (ev.recur && ev.recur !== 'none') {
     document.getElementById('delete-event-modal').classList.add('open');
   } else {
-    if(confirm('Delete this event?')) {
-      saveEvents(events.filter(x=>x.id!==editingEventId));
+    if (confirm('Delete this event?')) {
+      saveEvents(events.filter(x => x.id !== editingEventId));
       renderWeek();
-      if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+      if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
     }
   }
 }
@@ -1111,64 +1169,62 @@ function closeDeleteModal() { document.getElementById('delete-event-modal').clas
 
 function deleteOccurrence() {
   const events = loadEvents();
-  const ev = events.find(x=>x.id===editingEventId);
-  if(ev&&editingEventOccurrence){
-    ev.exceptions = ev.exceptions||[];
-    if(!ev.exceptions.includes(editingEventOccurrence)) ev.exceptions.push(editingEventOccurrence);
+  const ev = events.find(x => x.id === editingEventId);
+  if (ev && editingEventOccurrence) {
+    ev.exceptions = ev.exceptions || [];
+    if (!ev.exceptions.includes(editingEventOccurrence)) ev.exceptions.push(editingEventOccurrence);
     saveEvents(events);
   }
   closeDeleteModal();
   renderWeek();
-  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
 
 function deleteAllOccurrences() {
-  if(!confirm('Delete all occurrences of this event?')) return;
-  saveEvents(loadEvents().filter(x=>x.id!==editingEventId));
+  if (!confirm('Delete all occurrences of this event?')) return;
+  saveEvents(loadEvents().filter(x => x.id !== editingEventId));
   closeDeleteModal();
   renderWeek();
-  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 function exportData() {
-  const data = { tasks: loadTasks(), events: loadEvents(), exported: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const data = {tasks: loadTasks(), events: loadEvents(), exported: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='planner-backup-'+today()+'.json';
+  a.href = URL.createObjectURL(blob);
+  a.download = 'planner-backup-' + today() + '.json';
   a.click();
 }
 
 function importData(e) {
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(ev){
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
     try {
-      const data=JSON.parse(ev.target.result);
-      if(data.tasks) {
-        const existing=loadTasks();
-        const existingIds=new Set(existing.map(t=>t.id));
-        const merged=[...existing,...(data.tasks||[]).filter(t=>!existingIds.has(t.id))];
-        saveTasks(merged);
+      const data = JSON.parse(ev.target.result);
+      if (data.tasks) {
+        const existing = loadTasks();
+        const existingIds = new Set(existing.map(t => t.id));
+        saveTasks([...existing, ...(data.tasks||[]).filter(t => !existingIds.has(t.id))]);
       }
-      if(data.events) {
-        const existing=loadEvents();
-        const existingIds=new Set(existing.map(e=>e.id));
-        const merged=[...existing,...(data.events||[]).filter(e=>!existingIds.has(e.id))];
-        saveEvents(merged);
+      if (data.events) {
+        const existing = loadEvents();
+        const existingIds = new Set(existing.map(e => e.id));
+        saveEvents([...existing, ...(data.events||[]).filter(e => !existingIds.has(e.id))]);
       }
       alert('Import successful!');
       renderStorageInfo();
-    } catch(err){ alert('Import failed: '+err.message); }
+    } catch(err) { alert('Import failed: ' + err.message); }
   };
   reader.readAsText(file);
-  e.target.value='';
+  e.target.value = '';
 }
 
 function clearAllData() {
-  if(!confirm('This will delete ALL tasks and events. Are you sure?')) return;
-  if(!confirm('This cannot be undone. Confirm?')) return;
+  if (!confirm('This will delete ALL tasks and events. Are you sure?')) return;
+  if (!confirm('This cannot be undone. Confirm?')) return;
   localStorage.removeItem(TASKS_KEY);
   localStorage.removeItem(EVENTS_KEY);
   alert('All data cleared.');
@@ -1176,8 +1232,8 @@ function clearAllData() {
 }
 
 function renderStorageInfo() {
-  const tasks=loadTasks(), events=loadEvents();
-  document.getElementById('storage-info').innerHTML=`
+  const tasks = loadTasks(), events = loadEvents();
+  document.getElementById('storage-info').innerHTML = `
     <div>Tasks: <strong>${tasks.length}</strong></div>
     <div>Events: <strong>${events.length}</strong> (+ ${SG_HOLIDAYS.length} built-in SG holidays)</div>
     <div style="margin-top:8px;font-size:11px;">Data is stored in your browser's localStorage. Use Export to back up and transfer between devices.</div>
