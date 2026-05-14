@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Planner</title>
+<style>
+  :root {
+    --bg: #f9f9f8;
+    --surface: #ffffff;
+    --border: #e5e5e3;
+    --text: #1a1a1a;
+    --muted: #888884;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --work: #2563eb;
+    --personal: #16a34a;
+    --health: #d97706;
+    --others: #7c3aed;
+    --holiday: #db2777;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; }
+  .main { margin-left: 220px; padding: 32px; flex: 1; max-width: 1100px; }
+
+  /* Sidebar */
+  .sidebar-logo { padding: 0 20px 24px; font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo span { color: var(--accent); }
+  .nav { margin-top: 16px; flex: 1; }
+  .nav-item { display: block; padding: 9px 20px; color: var(--muted); font-size: 13.5px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { color: var(--text); background: var(--bg); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-light); font-weight: 500; }
+  .sidebar-bottom { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .sidebar-bottom .btn-sm { width: 100%; text-align: center; }
+
+  /* Views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Page header */
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+  .page-header p { color: var(--muted); margin-top: 3px; font-size: 13px; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 14px; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* Stat cards */
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-value { font-size: 28px; font-weight: 600; margin-top: 4px; letter-spacing: -1px; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn-sm { padding: 5px 11px; font-size: 12.5px; }
+  .btn-xs { padding: 3px 8px; font-size: 12px; border-radius: 5px; }
+
+  /* Tags / Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11.5px; font-weight: 500; }
+  .badge-work { background: #eff4ff; color: var(--work); }
+  .badge-personal { background: #f0fdf4; color: var(--personal); }
+  .badge-health { background: #fffbeb; color: var(--health); }
+  .badge-others { background: #f5f3ff; color: var(--others); }
+  .badge-holiday { background: #fdf2f8; color: var(--holiday); }
+  .badge-high { background: #fef2f2; color: #dc2626; }
+  .badge-medium { background: #fffbeb; color: #d97706; }
+  .badge-low { background: #f0fdf4; color: #16a34a; }
+  .badge-todo { background: #f3f4f6; color: #6b7280; }
+  .badge-inprogress { background: #eff4ff; color: #2563eb; }
+  .badge-done { background: #f0fdf4; color: #16a34a; }
+  .badge-overdue { background: #fef2f2; color: #dc2626; }
+
+  /* Dot indicator */
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot-work { background: var(--work); }
+  .dot-personal { background: var(--personal); }
+  .dot-health { background: var(--health); }
+  .dot-others { background: var(--others); }
+  .dot-holiday { background: var(--holiday); }
+
+  /* Form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12.5px; font-weight: 500; color: var(--muted); }
+  input, select, textarea { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; font-size: 13.5px; font-family: inherit; background: var(--surface); color: var(--text); transition: border 0.15s; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 72px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .entry-title { font-weight: 500; }
+  .entry-notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Filters */
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filters input, .filters select { width: auto; padding: 7px 11px; font-size: 13px; }
+  .filters input { min-width: 200px; }
+
+  /* Calendar */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-header h2 { font-size: 16px; font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cal-day-name { background: var(--bg); padding: 8px; text-align: center; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
+  .cal-day { background: var(--surface); padding: 8px; min-height: 80px; vertical-align: top; }
+  .cal-day.empty { background: var(--bg); }
+  .cal-day.today { background: var(--accent-light); }
+  .cal-day-num { font-size: 12.5px; font-weight: 500; margin-bottom: 4px; color: var(--muted); }
+  .cal-day.today .cal-day-num { color: var(--accent); font-weight: 700; }
+  .cal-event { font-size: 11px; padding: 2px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .cal-event-work { background: #eff4ff; color: var(--work); }
+  .cal-event-personal { background: #f0fdf4; color: var(--personal); }
+  .cal-event-health { background: #fffbeb; color: var(--health); }
+  .cal-event-others { background: #f5f3ff; color: var(--others); }
+  .cal-event-holiday { background: #fdf2f8; color: var(--holiday); }
+
+  /* Progress bar */
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  /* Today list */
+  .today-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .today-item:last-child { border-bottom: none; }
+  .today-item-text { flex: 1; }
+  .today-item-title { font-weight: 500; font-size: 13.5px; }
+  .today-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Section spacing */
+  .section { margin-bottom: 24px; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 10px; padding: 28px; width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+  .modal-header h2 { font-size: 17px; font-weight: 600; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; padding: 2px 6px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; }
+  .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .alert-info { background: var(--accent-light); border: 1px solid #bfdbfe; color: #1e40af; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; padding: 12px; }
+    .main { margin-left: 0; padding: 16px; }
+    .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">My <span>Planner</span></div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showView('dashboard')">Dashboard</div>
+      <div class="nav-item" onclick="showView('entries')">All Entries</div>
+      <div class="nav-item" onclick="showView('calendar')">Calendar</div>
+      <div class="nav-item" onclick="showView('add')">Add Entry</div>
+      <div class="nav-item" onclick="showView('data')">Data & Backup</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn btn-primary btn-sm" onclick="showView('add')">+ New Entry</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="page-header">
+        <h1 id="dash-greeting">Good morning</h1>
+        <p id="dash-date"></p>
+      </div>
+
+      <div class="grid-4 section" id="dash-stats"></div>
+
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Today</div>
+          <div id="dash-today"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Coming up this week</div>
+          <div id="dash-week"></div>
+        </div>
+      </div>
+
+      <div class="card section">
+        <div class="card-title">Category breakdown</div>
+        <div id="dash-breakdown"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="color-dot" style="background:var(--work)"></span> Work</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--personal)"></span> Personal</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--health)"></span> Health</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--others)"></span> Others</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--holiday)"></span> Holiday</div>
+        </div>
+      </div>
+
+      <div id="dash-overdue-wrap" class="section"></div>
+    </div>
+
+    <!-- ALL ENTRIES -->
+    <div id="view-entries" class="view">
+      <div class="page-header">
+        <h1>All Entries</h1>
+        <p>Browse, search, and manage everything in your planner.</p>
+      </div>
+      <div class="filters">
+        <input type="text" id="filter-search" placeholder="Search entries..." oninput="renderEntries()">
+        <select id="filter-cat" onchange="renderEntries()">
+          <option value="">All categories</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Health">Health</option>
+          <option value="Others">Others</option>
+          <option value="Holiday">Holiday</option>
+        </select>
+        <select id="filter-status" onchange="renderEntries()">
+          <option value="">All statuses</option>
+          <option value="To Do">To Do</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Done">Done</option>
+        </select>
+        <select id="filter-priority" onchange="renderEntries()">
+          <option value="">All priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>Due</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="entries-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="view-calendar" class="view">
+      <div class="page-header">
+        <h1>Calendar</h1>
+        <p>Monthly overview of all your entries and public holidays.</p>
+      </div>
+      <div class="card">
+        <div class="cal-header">
+          <button class="btn btn-secondary btn-sm" onclick="calPrev()">&#8592; Prev</button>
+          <h2 id="cal-title"></h2>
+          <button class="btn btn-secondary btn-sm" onclick="calNext()">Next &#8594;</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="legend" style="margin-top:16px;">
+          <div class="legend-item"><span class="color-dot" style="background:var(--work)"></span> Work</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--personal)"></span> Personal</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--health)"></span> Health</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--others)"></span> Others</div>
+          <div class="legend-item"><span class="color-dot" style="background:var(--holiday)"></span> Holiday</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD / EDIT ENTRY -->
+    <div id="view-add" class="view">
+      <div class="page-header">
+        <h1 id="form-title">Add Entry</h1>
+        <p>Fill in the details below. Only the title and category are required.</p>
+      </div>
+      <div class="card" style="max-width:620px;">
+        <form id="entry-form" onsubmit="saveEntry(event)">
+          <input type="hidden" id="edit-id">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Title</label>
+              <input type="text" id="f-title" placeholder="What is this entry?" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="f-category" required>
+                <option value="">Select...</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Health">Health</option>
+                <option value="Others">Others</option>
+                <option value="Holiday">Holiday</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Stream / Sub-label <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input type="text" id="f-stream" placeholder="e.g. Project Alpha, Gym">
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="f-priority">
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="f-status">
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="f-start">
+            </div>
+            <div class="form-group">
+              <label>Due Date</label>
+              <input type="date" id="f-due">
+            </div>
+            <div class="form-group full">
+              <label>Notes <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <textarea id="f-notes" placeholder="Any additional context..."></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+            <button type="submit" class="btn btn-primary">Save Entry</button>
+            <button type="button" class="btn btn-secondary" onclick="resetForm();showView('entries')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- DATA & BACKUP -->
+    <div id="view-data" class="view">
+      <div class="page-header">
+        <h1>Data & Backup</h1>
+        <p>Export, import, or clear your planner data.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Export</div>
+          <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Download all your entries as a JSON file. Use this to back up your data or transfer it to another device.</p>
+          <button class="btn btn-secondary" onclick="exportData()">Download JSON backup</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Import</div>
+          <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Import a previously exported JSON file. Entries will be merged with your existing data — no duplicates.</p>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON file</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Danger zone</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">This will permanently delete all entries. This cannot be undone. Export a backup first.</p>
+        <button class="btn btn-danger" onclick="clearAll()">Clear all data</button>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">About</div>
+        <p style="color:var(--muted);font-size:13px;">Data is stored in your browser's localStorage. Use Export/Import to sync across devices. Singapore public holidays for 2024–2026 are pre-loaded and cannot be deleted.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit Entry</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="edit-form" onsubmit="saveEdit(event)">
+      <input type="hidden" id="m-id">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Title</label>
+          <input type="text" id="m-title" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="m-category" required>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Health">Health</option>
+            <option value="Others">Others</option>
+            <option value="Holiday">Holiday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Stream / Sub-label</label>
+          <input type="text" id="m-stream">
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="m-priority">
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="m-status">
+            <option value="To Do">To Do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="m-start">
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="m-due">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="m-notes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ─── Singapore Public Holidays 2024–2026 ───────────────────────────────────
+const SG_HOLIDAYS = [
+  // 2024
+  {date:"2024-01-01",title:"New Year's Day"},
+  {date:"2024-02-10",title:"Chinese New Year"},
+  {date:"2024-02-11",title:"Chinese New Year (Day 2)"},
+  {date:"2024-02-12",title:"Chinese New Year (Day 2 observed)"},
+  {date:"2024-03-29",title:"Good Friday"},
+  {date:"2024-04-10",title:"Hari Raya Puasa"},
+  {date:"2024-05-01",title:"Labour Day"},
+  {date:"2024-05-23",title:"Vesak Day"},
+  {date:"2024-06-17",title:"Hari Raya Haji"},
+  {date:"2024-08-09",title:"National Day"},
+  {date:"2024-10-31",title:"Deepavali"},
+  {date:"2024-12-25",title:"Christmas Day"},
+  // 2025
+  {date:"2025-01-01",title:"New Year's Day"},
+  {date:"2025-01-29",title:"Chinese New Year"},
+  {date:"2025-01-30",title:"Chinese New Year (Day 2)"},
+  {date:"2025-03-31",title:"Hari Raya Puasa"},
+  {date:"2025-04-18",title:"Good Friday"},
+  {date:"2025-05-01",title:"Labour Day"},
+  {date:"2025-05-12",title:"Vesak Day"},
+  {date:"2025-06-07",title:"Hari Raya Haji"},
+  {date:"2025-08-09",title:"National Day"},
+  {date:"2025-10-20",title:"Deepavali"},
+  {date:"2025-12-25",title:"Christmas Day"},
+  // 2026
+  {date:"2026-01-01",title:"New Year's Day"},
+  {date:"2026-02-17",title:"Chinese New Year"},
+  {date:"2026-02-18",title:"Chinese New Year (Day 2)"},
+  {date:"2026-03-20",title:"Hari Raya Puasa"},
+  {date:"2026-04-03",title:"Good Friday"},
+  {date:"2026-05-01",title:"Labour Day"},
+  {date:"2026-05-31",title:"Vesak Day"},
+  {date:"2026-05-27",title:"Hari Raya Haji"},
+  {date:"2026-08-09",title:"National Day"},
+  {date:"2026-11-08",title:"Deepavali"},
+  {date:"2026-12-25",title:"Christmas Day"},
+];
+
+// ─── Data Layer ────────────────────────────────────────────────────────────
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem('planner_entries') || '[]'); } catch { return []; }
+}
+function saveEntries(arr) {
+  localStorage.setItem('planner_entries', JSON.stringify(arr));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+
+// ─── Navigation ───────────────────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const items = document.querySelectorAll('.nav-item');
+  const labels = {dashboard:0, entries:1, calendar:2, add:3, data:4};
+  if (labels[name] !== undefined) items[labels[name]].classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'entries') renderEntries();
+  if (name === 'calendar') renderCalendar();
+  if (name === 'add') { resetForm(); document.getElementById('form-title').textContent = 'Add Entry'; }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function catClass(c) { return (c||'others').toLowerCase().replace(' ',''); }
+function statusClass(s) {
+  if (!s) return 'todo';
+  if (s === 'In Progress') return 'inprogress';
+  if (s === 'Done') return 'done';
+  return 'todo';
+}
+function isOverdue(entry) {
+  return entry.due && entry.due < today() && entry.status !== 'Done';
+}
+function allEntries() {
+  const user = loadEntries();
+  const holidays = SG_HOLIDAYS.map(h => ({
+    id: 'ph_' + h.date,
+    title: h.title,
+    category: 'Holiday',
+    priority: '',
+    status: '',
+    start: h.date,
+    due: h.date,
+    notes: 'Singapore Public Holiday',
+    stream: '',
+    isHoliday: true
+  }));
+  return [...user, ...holidays];
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const now = new Date();
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = greeting;
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-SG', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const entries = loadEntries();
+  const todayStr = today();
+  const todayItems = allEntries().filter(e => (e.start === todayStr || e.due === todayStr));
+  const overdueItems = entries.filter(e => isOverdue(e));
+  const doneItems = entries.filter(e => e.status === 'Done');
+  const inprogItems = entries.filter(e => e.status === 'In Progress');
+
+  // Stats
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total entries</div><div class="stat-value">${entries.length}</div><div class="stat-sub">across all categories</div></div>
+    <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-value" style="color:var(--accent)">${inprogItems.length}</div><div class="stat-sub">active items</div></div>
+    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--success)">${doneItems.length}</div><div class="stat-sub">items done</div></div>
+    <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" style="color:${overdueItems.length>0?'var(--danger)':'var(--success)'}">${overdueItems.length}</div><div class="stat-sub">need attention</div></div>
+  `;
+
+  // Today
+  const todayEl = document.getElementById('dash-today');
+  if (todayItems.length === 0) {
+    todayEl.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-sub">Nothing scheduled for today.</div></div>';
+  } else {
+    todayEl.innerHTML = todayItems.slice(0,6).map(e => `
+      <div class="today-item">
+        <span class="dot dot-${catClass(e.category)}"></span>
+        <div class="today-item-text">
+          <div class="today-item-title">${e.title}</div>
+          <div class="today-item-meta">${e.category}${e.stream?' · '+e.stream:''}</div>
+        </div>
+        ${e.status?`<span class="badge badge-${statusClass(e.status)}">${e.status}</span>`:''}
+      </div>`).join('');
+  }
+
+  // This week
+  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekEndStr = weekEnd.toISOString().split('T')[0];
+  const weekItems = allEntries().filter(e => e.due > todayStr && e.due <= weekEndStr);
+  const weekEl = document.getElementById('dash-week');
+  if (weekItems.length === 0) {
+    weekEl.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-sub">Nothing due in the next 7 days.</div></div>';
+  } else {
+    weekEl.innerHTML = weekItems.slice(0,6).map(e => `
+      <div class="today-item">
+        <span class="dot dot-${catClass(e.category)}"></span>
+        <div class="today-item-text">
+          <div class="today-item-title">${e.title}</div>
+          <div class="today-item-meta">Due ${fmtDate(e.due)}${e.stream?' · '+e.stream:''}</div>
+        </div>
+        ${e.priority?`<span class="badge badge-${(e.priority||'').toLowerCase()}">${e.priority}</span>`:''}
+      </div>`).join('');
+  }
+
+  // Category breakdown
+  const cats = ['Work','Personal','Health','Others','Holiday'];
+  const colors = {Work:'var(--work)',Personal:'var(--personal)',Health:'var(--health)',Others:'var(--others)',Holiday:'var(--holiday)'};
+  const total = allEntries().length || 1;
+  document.getElementById('dash-breakdown').innerHTML = cats.map(cat => {
+    const count = allEntries().filter(e => e.category === cat).length;
+    const pct = Math.round(count / total * 100);
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span style="font-weight:500">${cat}</span>
+        <span style="color:var(--muted)">${count} entries · ${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[cat]}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Overdue alert
+  const ovEl = document.getElementById('dash-overdue-wrap');
+  if (overdueItems.length > 0) {
+    ovEl.innerHTML = `<div class="alert alert-warning"><strong>${overdueItems.length} overdue item${overdueItems.length>1?'s':''}:</strong> ${overdueItems.map(e=>`<strong>${e.title}</strong> (due ${fmtDate(e.due)})`).join(', ')}</div>`;
+  } else {
+    ovEl.innerHTML = '';
+  }
+}
+
+// ─── Entries Table ─────────────────────────────────────────────────────────
+function renderEntries() {
+  const search = (document.getElementById('filter-search').value||'').toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const status = document.getElementById('filter-status').value;
+  const priority = document.getElementById('filter-priority').value;
+
+  let entries = loadEntries().filter(e => {
+    if (search && !e.title.toLowerCase().includes(search) && !(e.notes||'').toLowerCase().includes(search) && !(e.stream||'').toLowerCase().includes(search)) return false;
+    if (cat && e.category !== cat) return false;
+    if (status && e.status !== status) return false;
+    if (priority && e.priority !== priority) return false;
+    return true;
+  });
+
+  entries.sort((a,b) => {
+    if (a.due && b.due) return a.due.localeCompare(b.due);
+    if (a.due) return -1;
+    if (b.due) return 1;
+    return 0;
+  });
+
+  const tbody = document.getElementById('entries-tbody');
+  if (entries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-title">No entries found</div><div class="empty-sub">Try adjusting your filters or add a new entry.</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(e => `
+    <tr>
+      <td>
+        <div class="entry-title">${e.title}${isOverdue(e)?` <span class="badge badge-overdue" style="font-size:10.5px">Overdue</span>`:''}</div>
+        ${e.stream?`<div class="entry-notes">${e.stream}</div>`:''}
+        ${e.notes?`<div class="entry-notes">${e.notes.substring(0,60)}${e.notes.length>60?'...':''}</div>`:''}
+      </td>
+      <td><span class="badge badge-${catClass(e.category)}">${e.category}</span></td>
+      <td>${e.priority?`<span class="badge badge-${(e.priority).toLowerCase()}">${e.priority}</span>`:'—'}</td>
+      <td>${e.status?`<span class="badge badge-${statusClass(e.status)}">${e.status}</span>`:'—'}</td>
+      <td style="color:var(--muted);font-size:13px">${fmtDate(e.start)}</td>
+      <td style="color:var(--muted);font-size:13px">${fmtDate(e.due)}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${e.status !== 'Done' ? `<button class="btn btn-secondary btn-xs" onclick="markDone('${e.id}')">Done</button>` : ''}
+          <button class="btn btn-secondary btn-xs" onclick="openEdit('${e.id}')">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ─── Entry Actions ─────────────────────────────────────────────────────────
+function saveEntry(e) {
+  e.preventDefault();
+  const entries = loadEntries();
+  entries.push({
+    id: genId(),
+    title: document.getElementById('f-title').value.trim(),
+    category: document.getElementById('f-category').value,
+    stream: document.getElementById('f-stream').value.trim(),
+    priority: document.getElementById('f-priority').value,
+    status: document.getElementById('f-status').value,
+    start: document.getElementById('f-start').value,
+    due: document.getElementById('f-due').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    created: new Date().toISOString()
+  });
+  saveEntries(entries);
+  resetForm();
+  showView('entries');
+}
+
+function resetForm() {
+  document.getElementById('entry-form').reset();
+  document.getElementById('edit-id').value = '';
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  saveEntries(loadEntries().filter(e => e.id !== id));
+  renderEntries();
+  renderDashboard();
+}
+
+function markDone(id) {
+  const entries = loadEntries();
+  const i = entries.findIndex(e => e.id === id);
+  if (i > -1) entries[i].status = 'Done';
+  saveEntries(entries);
+  renderEntries();
+}
+
+function openEdit(id) {
+  const entry = loadEntries().find(e => e.id === id);
+  if (!entry) return;
+  document.getElementById('m-id').value = entry.id;
+  document.getElementById('m-title').value = entry.title;
+  document.getElementById('m-category').value = entry.category;
+  document.getElementById('m-stream').value = entry.stream || '';
+  document.getElementById('m-priority').value = entry.priority || 'Medium';
+  document.getElementById('m-status').value = entry.status || 'To Do';
+  document.getElementById('m-start').value = entry.start || '';
+  document.getElementById('m-due').value = entry.due || '';
+  document.getElementById('m-notes').value = entry.notes || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function saveEdit(e) {
+  e.preventDefault();
+  const entries = loadEntries();
+  const i = entries.findIndex(e => e.id === document.getElementById('m-id').value);
+  if (i > -1) {
+    entries[i] = { ...entries[i],
+      title: document.getElementById('m-title').value.trim(),
+      category: document.getElementById('m-category').value,
+      stream: document.getElementById('m-stream').value.trim(),
+      priority: document.getElementById('m-priority').value,
+      status: document.getElementById('m-status').value,
+      start: document.getElementById('m-start').value,
+      due: document.getElementById('m-due').value,
+      notes: document.getElementById('m-notes').value.trim(),
+    };
+    saveEntries(entries);
+  }
+  closeModal();
+  renderEntries();
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+// ─── Calendar ──────────────────────────────────────────────────────────────
+let calYear, calMonth;
+function initCal() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+}
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent = `${months[calMonth]} ${calYear}`;
+  const grid = document.getElementById('cal-grid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayStr = today();
+  const entries = allEntries();
+
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayEntries = entries.filter(e => e.due === dateStr || e.start === dateStr);
+    html += `<div class="cal-day${isToday?' today':''}">
+      <div class="cal-day-num">${d}</div>
+      ${dayEntries.slice(0,3).map(e => `<div class="cal-event cal-event-${catClass(e.category)}" title="${e.title}">${e.title}</div>`).join('')}
+      ${dayEntries.length > 3 ? `<div style="font-size:10.5px;color:var(--muted)">+${dayEntries.length-3} more</div>` : ''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ─── Data Backup ───────────────────────────────────────────────────────────
+function exportData() {
+  const data = { version: 1, exported: new Date().toISOString(), entries: loadEntries() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `planner-backup-${today()}.json`;
+  a.click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const incoming = data.entries || data;
+      if (!Array.isArray(incoming)) { alert('Invalid file format.'); return; }
+      const existing = loadEntries();
+      const existingIds = new Set(existing.map(e => e.id));
+      const merged = [...existing, ...incoming.filter(e => !existingIds.has(e.id))];
+      saveEntries(merged);
+      alert(`Import complete. ${merged.length - existing.length} new entries added.`);
+      renderEntries();
+    } catch { alert('Could not read file. Please use a valid JSON backup.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAll() {
+  if (!confirm('This will delete ALL your entries permanently. Are you sure?')) return;
+  if (!confirm('Last chance — this cannot be undone.')) return;
+  localStorage.removeItem('planner_entries');
+  renderEntries();
+  renderDashboard();
+  alert('All entries cleared.');
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+initCal();
+renderDashboard();
+</script>
+</body>
+</html>
