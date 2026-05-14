@@ -5,861 +5,436 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Planner</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  
   :root {
-    --bg: #f7f7f5;
+    --bg: #f8f8f6;
     --surface: #ffffff;
     --border: #e8e8e4;
-    --text-primary: #1a1a1a;
-    --text-secondary: #6b6b6b;
-    --text-muted: #9b9b9b;
-    --accent: #2d6a4f;
-    --accent-light: #e8f4f0;
-    --work: #4a7c9e;
-    --personal: #9e6b4a;
-    --health: #6b9e4a;
-    --others: #7c4a9e;
-    --holiday: #9e4a6b;
-    --study: #4a6b9e;
-    --danger: #c0392b;
-    --warning: #e67e22;
-    --success: #27ae60;
-    --sidebar-width: 220px;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --text-light: #bbb;
+    --accent: #2c2c2c;
+    --work: #4a7fa5;
+    --personal: #7a9e7e;
+    --health: #c17f5a;
+    --others: #9b7db6;
+    --study: #d4a843;
+    --holiday: #b85c5c;
+    --sidebar-w: 220px;
+    --radius: 8px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
   }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; font-size: 14px; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    display: flex;
-    min-height: 100vh;
-    font-size: 14px;
-  }
+  /* Sidebar */
+  .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; position: fixed; height: 100vh; z-index: 100; }
+  .sidebar-logo { padding: 0 24px 24px; font-size: 16px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .sidebar-logo span { font-weight: 300; color: var(--text-muted); }
+  .nav-item { padding: 9px 24px; cursor: pointer; color: var(--text-muted); font-size: 13px; transition: all 0.15s; border-left: 2px solid transparent; display: flex; align-items: center; gap: 10px; }
+  .nav-item:hover { color: var(--text); background: var(--bg); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: var(--bg); font-weight: 500; }
+  .nav-section { padding: 16px 24px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
 
-  /* SIDEBAR */
-  .sidebar {
-    width: var(--sidebar-width);
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 100;
-  }
-
-  .sidebar-brand {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-brand h1 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.3px;
-  }
-
-  .sidebar-brand p {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .sidebar-nav {
-    padding: 12px 0;
-    flex: 1;
-  }
-
-  .nav-section-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text-muted);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    padding: 8px 20px 4px;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 20px;
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 13.5px;
-    border-left: 2px solid transparent;
-    transition: all 0.15s;
-  }
-
-  .nav-item:hover { background: var(--bg); color: var(--text-primary); }
-  .nav-item.active { 
-    background: var(--accent-light); 
-    color: var(--accent); 
-    border-left-color: var(--accent);
-    font-weight: 500;
-  }
-
-  .nav-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .sidebar-footer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  /* MAIN */
-  .main {
-    margin-left: var(--sidebar-width);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
-
-  .topbar h2 { font-size: 16px; font-weight: 600; }
-  .topbar-date { font-size: 12px; color: var(--text-muted); }
-
-  .content { padding: 28px 32px; flex: 1; }
-
-  /* PAGES */
+  /* Main */
+  .main { margin-left: var(--sidebar-w); flex: 1; padding: 32px; max-width: 1200px; }
   .page { display: none; }
   .page.active { display: block; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+  .page-header p { color: var(--text-muted); margin-top: 4px; font-size: 13px; }
 
-  /* CARDS */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 16px; font-weight: 500; }
 
-  .card-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 16px;
-  }
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 
-  /* GRID */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  /* BUTTONS */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s;
-  }
-
+  /* Buttons */
+  .btn { padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
   .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #235c42; }
-  .btn-secondary { background: var(--bg); color: var(--text-primary); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: var(--border); }
-  .btn-danger { background: #fdf0ee; color: var(--danger); border: 1px solid #f5c6c0; }
-  .btn-danger:hover { background: #f5c6c0; }
-  .btn-sm { padding: 5px 10px; font-size: 12px; }
-  .btn-warning { background: #fef9ec; color: var(--warning); border: 1px solid #fde8b0; }
+  .btn-primary:hover { background: #3a3a3a; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+  .btn-danger { background: transparent; border: 1px solid #e0c0c0; color: #c05050; }
+  .btn-danger:hover { background: #fff0f0; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 4px; }
+  .btn-icon:hover { color: var(--text); background: var(--bg); }
 
-  /* FORMS */
-  .form-group { margin-bottom: 14px; }
-  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
-  .form-control {
-    width: 100%;
-    padding: 8px 11px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    font-size: 13px;
-    background: var(--bg);
-    color: var(--text-primary);
-    transition: border 0.15s;
-  }
-  .form-control:focus { outline: none; border-color: var(--accent); background: white; }
-  .form-row { display: grid; gap: 12px; }
+  /* Category dots/badges */
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .cat-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .cat-Work { background: var(--work); }
+  .cat-Personal { background: var(--personal); }
+  .cat-Health { background: var(--health); }
+  .cat-Others { background: var(--others); }
+  .cat-Study { background: var(--study); }
+  .cat-Holiday { background: var(--holiday); }
+  .badge-Work { background: #e8f0f7; color: var(--work); }
+  .badge-Personal { background: #eef4ee; color: #5a7e5e; }
+  .badge-Health { background: #f7f0eb; color: var(--health); }
+  .badge-Others { background: #f3f0f7; color: var(--others); }
+  .badge-Study { background: #fdf5e6; color: #b8882a; }
+  .badge-Holiday { background: #faeaea; color: var(--holiday); }
+
+  /* Priority */
+  .pri-High { color: #c05050; font-weight: 600; }
+  .pri-Medium { color: #c08030; font-weight: 500; }
+  .pri-Low { color: var(--text-muted); }
+
+  /* Status */
+  .status-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+  .status-Todo { background: #f0f0f0; color: #666; }
+  .status-In-Progress { background: #e8f0f7; color: var(--work); }
+  .status-Done { background: #eef4ee; color: #5a7e5e; }
+  .status-Rolled-Over { background: #fdf5e6; color: #b8882a; }
+
+  /* Forms */
+  .form-row { display: grid; gap: 12px; margin-bottom: 12px; }
   .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
   .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; background: var(--bg); color: var(--text); transition: border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); background: white; }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin: 16px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 
-  /* BADGES */
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .badge-work { background: #e8f0f7; color: var(--work); }
-  .badge-personal { background: #f7f0e8; color: var(--personal); }
-  .badge-health { background: #f0f7e8; color: var(--health); }
-  .badge-others { background: #f0e8f7; color: var(--others); }
-  .badge-holiday { background: #f7e8f0; color: var(--holiday); }
-  .badge-study { background: #e8eef7; color: var(--study); }
-
-  .badge-high { background: #fdf0ee; color: var(--danger); }
-  .badge-medium { background: #fef9ec; color: var(--warning); }
-  .badge-low { background: #f0f7e8; color: var(--success); }
-
-  .badge-todo { background: #f0f0f0; color: #666; }
-  .badge-inprogress { background: #e8eef7; color: var(--work); }
-  .badge-done { background: #f0f7e8; color: var(--success); }
-  .badge-rolledover { background: #fef9ec; color: var(--warning); }
-
-  /* CATEGORY DOTS */
-  .dot-work { background: var(--work); }
-  .dot-personal { background: var(--personal); }
-  .dot-health { background: var(--health); }
-  .dot-others { background: var(--others); }
-  .dot-holiday { background: var(--holiday); }
-  .dot-study { background: var(--study); }
-
-  /* DASHBOARD */
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-  }
-
-  .stat-number { font-size: 28px; font-weight: 600; color: var(--text-primary); }
-  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-  .today-event-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .today-event-item:last-child { border-bottom: none; }
-
-  .event-time-badge {
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    min-width: 80px;
-    padding-top: 1px;
-  }
-
-  .task-item-dash {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .task-item-dash:last-child { border-bottom: none; }
-
-  .task-check {
-    width: 16px; height: 16px;
-    border-radius: 4px;
-    border: 1.5px solid var(--border);
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px;
-    transition: all 0.15s;
-  }
-  .task-check:hover { border-color: var(--accent); }
-  .task-check.checked { background: var(--accent); border-color: var(--accent); color: white; }
-
-  /* TASKS PAGE */
-  .task-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    margin-bottom: 8px;
-    background: var(--surface);
-    transition: all 0.15s;
-  }
-  .task-row:hover { border-color: #d0d0cc; }
-  .task-row.done-row { opacity: 0.5; }
-
-  .task-title-col { flex: 1; font-size: 13.5px; }
-  .task-title-col .rollover-note { font-size: 11px; color: var(--warning); margin-top: 2px; }
-  .task-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-
-  .overdue-flag { font-size: 11px; color: var(--danger); font-weight: 500; }
-
-  /* FILTERS */
-  .filter-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-    align-items: center;
-  }
-
-  .filter-bar input, .filter-bar select {
-    padding: 7px 11px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    font-size: 12.5px;
-    background: var(--surface);
-    color: var(--text-primary);
-  }
-
-  .filter-bar input { min-width: 200px; }
-  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
-
-  /* CALENDAR */
-  .cal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-
-  .cal-header h3 { font-size: 15px; font-weight: 600; }
-
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .cal-day-header {
-    background: var(--bg);
-    padding: 8px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .cal-day {
-    background: var(--surface);
-    min-height: 90px;
-    padding: 6px;
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .cal-day:hover { background: var(--bg); }
-  .cal-day.other-month { background: #fafaf8; }
-  .cal-day.today { background: var(--accent-light); }
-  .cal-day.today .cal-day-num { 
-    background: var(--accent); 
-    color: white; 
-    border-radius: 50%;
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .cal-day-num { font-size: 12px; font-weight: 500; margin-bottom: 4px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-  .cal-day.other-month .cal-day-num { color: var(--text-muted); }
-
-  .cal-event-dot {
-    font-size: 10.5px;
-    padding: 1px 5px;
-    border-radius: 3px;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: white;
-    font-weight: 500;
-  }
-
-  .cal-task-count {
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  /* WEEK VIEW */
-  .week-nav {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .week-nav h3 { font-size: 14px; font-weight: 600; flex: 1; text-align: center; }
-
-  .week-grid {
-    display: grid;
-    grid-template-columns: 60px repeat(7, 1fr);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--border);
-    gap: 1px;
-  }
-
-  .week-day-header {
-    background: var(--bg);
-    padding: 8px 4px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-  .week-day-header.today-col { background: var(--accent-light); color: var(--accent); }
-  .week-day-header span { display: block; font-size: 16px; font-weight: 600; color: var(--text-primary); }
-  .week-day-header.today-col span { color: var(--accent); }
-
-  .week-time-label {
-    background: var(--bg);
-    padding: 4px 6px;
-    text-align: right;
-    font-size: 10px;
-    color: var(--text-muted);
-    height: 48px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding-top: 6px;
-  }
-
-  .week-cell {
-    background: var(--surface);
-    height: 48px;
-    position: relative;
-    border-top: 1px solid #f0f0ec;
-  }
-  .week-cell.today-col { background: #fdfffe; }
-
-  .week-event-block {
-    position: absolute;
-    left: 1px; right: 1px;
-    border-radius: 4px;
-    padding: 2px 5px;
-    font-size: 10px;
-    font-weight: 500;
-    color: white;
-    overflow: hidden;
-    cursor: pointer;
-    z-index: 2;
-    line-height: 1.3;
-  }
-
-  /* GANTT */
-  .gantt-container { overflow-x: auto; }
-
-  .gantt-table {
-    min-width: 900px;
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  .gantt-table th {
-    background: var(--bg);
-    padding: 8px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-  }
-
-  .gantt-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-    font-size: 13px;
-  }
-
-  .gantt-bar-cell { width: 55%; position: relative; }
-
-  .gantt-timeline-header {
-    display: flex;
-    width: 100%;
-  }
-
-  .gantt-week-label {
-    flex: 1;
-    font-size: 10px;
-    color: var(--text-muted);
-    text-align: center;
-    border-right: 1px dashed var(--border);
-    padding: 2px 0;
-  }
-
-  .gantt-bar-wrapper {
-    position: relative;
-    height: 24px;
-    width: 100%;
-  }
-
-  .gantt-bar {
-    position: absolute;
-    height: 16px;
-    top: 4px;
-    border-radius: 4px;
-    opacity: 0.85;
-    min-width: 4px;
-  }
-
-  .gantt-today-line {
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 2px;
-    background: var(--danger);
-    opacity: 0.6;
-    z-index: 3;
-  }
-
-  /* MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.35);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-  }
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
   .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-header h2 { font-size: 16px; font-weight: 600; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 
-  .modal {
-    background: var(--surface);
-    border-radius: 12px;
-    padding: 28px;
-    width: 540px;
-    max-width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-  }
+  /* Dashboard */
+  .dash-stat { text-align: center; }
+  .dash-stat .num { font-size: 28px; font-weight: 300; letter-spacing: -1px; }
+  .dash-stat .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .task-item-dash { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .task-item-dash:last-child { border-bottom: none; }
+  .task-item-dash .task-title { font-size: 13px; font-weight: 500; }
+  .task-item-dash .task-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-  .modal-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-  }
+  /* Task list */
+  .task-table { width: 100%; border-collapse: collapse; }
+  .task-table th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+  .task-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .task-table tr:last-child td { border-bottom: none; }
+  .task-table tr:hover td { background: var(--bg); }
+  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .task-table tr:hover .task-actions { opacity: 1; }
+  .original-date { font-size: 10px; color: var(--text-muted); text-decoration: line-through; }
+  .event-link { font-size: 10px; color: var(--work); background: #e8f0f7; padding: 1px 6px; border-radius: 10px; }
 
-  .modal-footer {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-  }
+  /* Filters */
+  .filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filters input, .filters select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: var(--surface); color: var(--text); }
+  .filters input { flex: 1; min-width: 180px; }
 
-  /* DATA PAGE */
-  .data-section { margin-bottom: 24px; }
-  .data-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
-  .data-section p { font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.6; }
+  /* Week View */
+  .week-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .week-nav h2 { font-size: 15px; font-weight: 500; flex: 1; text-align: center; }
+  .week-grid { display: grid; grid-template-columns: 52px repeat(7, 1fr); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .week-header { background: var(--bg); border-bottom: 1px solid var(--border); padding: 10px 6px; text-align: center; font-size: 12px; font-weight: 500; }
+  .week-header .day-num { font-size: 18px; font-weight: 300; display: block; margin-top: 2px; }
+  .week-header.today-col { background: #f0f4f8; }
+  .week-header.today-col .day-num { color: var(--work); font-weight: 600; }
+  .time-col { font-size: 11px; color: var(--text-muted); text-align: right; padding: 0 8px; height: 48px; display: flex; align-items: flex-start; padding-top: 4px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .day-cell { border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); height: 48px; position: relative; cursor: pointer; }
+  .day-cell:hover { background: #fafafa; }
+  .event-block { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 5px; font-size: 11px; overflow: hidden; cursor: pointer; z-index: 10; color: white; line-height: 1.3; }
+  .event-block .ev-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .event-block .ev-stream { font-size: 10px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .event-block .ev-time { font-size: 10px; opacity: 0.8; }
+  .allday-row { border-bottom: 1px solid var(--border); min-height: 28px; }
+  .allday-cell { border-left: 1px solid var(--border); padding: 3px; display: flex; flex-wrap: wrap; gap: 2px; }
+  .allday-event { font-size: 10px; padding: 1px 6px; border-radius: 3px; color: white; white-space: nowrap; }
 
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-    font-size: 13px;
-  }
+  /* Monthly Calendar */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cal-header { background: var(--bg); padding: 8px; text-align: center; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .cal-day { min-height: 90px; padding: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); vertical-align: top; cursor: pointer; background: var(--surface); transition: background 0.1s; }
+  .cal-day:hover { background: var(--bg); }
+  .cal-day.other-month { background: var(--bg); }
+  .cal-day.today { background: #f0f4f8; }
+  .cal-day .day-num { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+  .cal-day.today .day-num { color: var(--work); font-weight: 700; }
+  .cal-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin: 1px; }
+  .cal-event-pill { font-size: 10px; padding: 1px 5px; border-radius: 3px; color: white; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .cal-task-count { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .cal-nav h2 { font-size: 15px; font-weight: 500; flex: 1; text-align: center; }
+  .day-detail { margin-top: 20px; }
+  .day-detail-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .detail-event { padding: 8px 12px; border-radius: var(--radius); margin-bottom: 6px; color: white; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .detail-event .ev-info .ev-name { font-weight: 500; }
+  .detail-event .ev-info .ev-meta { opacity: 0.85; font-size: 11px; margin-top: 1px; }
 
-  /* PROGRESS BAR */
-  .progress-bar-bg {
-    height: 6px;
-    background: var(--bg);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 6px;
-  }
-  .progress-bar-fill { height: 100%; border-radius: 3px; }
+  /* Gantt */
+  .gantt-container { overflow-x: auto; }
+  .gantt-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  .gantt-table th { padding: 8px 10px; font-size: 11px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); text-align: left; }
+  .gantt-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .gantt-bar-cell { position: relative; height: 36px; }
+  .gantt-bar { position: absolute; height: 18px; top: 9px; border-radius: 3px; opacity: 0.85; display: flex; align-items: center; padding: 0 6px; font-size: 10px; color: white; white-space: nowrap; overflow: hidden; }
+  .gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: #e05050; opacity: 0.7; z-index: 5; }
+  .week-label { font-size: 10px; color: var(--text-muted); text-align: center; padding: 4px 0; border-bottom: 1px solid var(--border); }
 
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
+  /* Recurring badge */
+  .rec-badge { font-size: 10px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); padding: 1px 5px; border-radius: 10px; margin-left: 4px; }
 
-  .tag-input {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-  }
+  /* Linked tasks section in event modal */
+  .linked-tasks-list { margin-top: 8px; }
+  .linked-task-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .linked-task-row:last-child { border-bottom: none; }
+  .linked-task-row input, .linked-task-row select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; background: var(--bg); }
+  .linked-task-row input[type="text"] { flex: 1; }
 
-  .recurring-badge {
-    font-size: 10px;
-    background: #e8f4f0;
-    color: var(--accent);
-    padding: 1px 6px;
-    border-radius: 10px;
-    font-weight: 500;
-  }
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty p { margin-top: 8px; font-size: 13px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: white; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
 
   @media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); }
-    .main { margin-left: 0; }
+    .sidebar { width: 60px; }
+    .sidebar-logo, .nav-section, .nav-item span { display: none; }
+    .main { margin-left: 60px; padding: 16px; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .content { padding: 16px; }
   }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-brand">
-    <h1>My Planner</h1>
-    <p id="sidebar-date"></p>
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">My <span>Planner</span></div>
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><span>Dashboard</span></div>
+  <div class="nav-section">Schedule</div>
+  <div class="nav-item" onclick="showPage('week')"><span>Week View</span></div>
+  <div class="nav-item" onclick="showPage('calendar')"><span>Calendar</span></div>
+  <div class="nav-section">Tasks</div>
+  <div class="nav-item" onclick="showPage('tasks')"><span>Task List</span></div>
+  <div class="nav-item" onclick="showPage('gantt')"><span>Timeline</span></div>
+  <div class="nav-section">Settings</div>
+  <div class="nav-item" onclick="showPage('data')"><span>Data & Backup</span></div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h1 id="dash-greeting">Good morning</h1>
+      <p id="dash-date"></p>
+    </div>
+    <div class="grid-3" style="margin-bottom:16px">
+      <div class="card dash-stat"><div class="num" id="stat-today">0</div><div class="label">Due Today</div></div>
+      <div class="card dash-stat"><div class="num" id="stat-overdue">0</div><div class="label">Overdue</div></div>
+      <div class="card dash-stat"><div class="num" id="stat-week">0</div><div class="label">This Week</div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">Today's Events</div>
+        <div id="dash-events"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Open Tasks</div>
+        <div id="dash-tasks"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Category Breakdown</div>
+      <div id="dash-breakdown"></div>
+    </div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Overview</div>
-    <div class="nav-item active" onclick="showPage('dashboard')">
-      <span class="nav-dot" style="background:#2d6a4f"></span> Dashboard
-    </div>
-    <div class="nav-section-label">Schedule</div>
-    <div class="nav-item" onclick="showPage('week')">
-      <span class="nav-dot" style="background:#4a7c9e"></span> Week View
-    </div>
-    <div class="nav-item" onclick="showPage('calendar')">
-      <span class="nav-dot" style="background:#7c4a9e"></span> Calendar
-    </div>
-    <div class="nav-section-label">Planning</div>
-    <div class="nav-item" onclick="showPage('tasks')">
-      <span class="nav-dot" style="background:#9e6b4a"></span> Tasks
-    </div>
-    <div class="nav-item" onclick="showPage('gantt')">
-      <span class="nav-dot" style="background:#6b9e4a"></span> Gantt
-    </div>
-    <div class="nav-section-label">Settings</div>
-    <div class="nav-item" onclick="showPage('data')">
-      <span class="nav-dot" style="background:#9b9b9b"></span> Data & Backup
-    </div>
-  </nav>
-  <div class="sidebar-footer">Stage 2 &mdash; My Planner</div>
-</aside>
 
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <h2 id="page-title">Dashboard</h2>
-    <span class="topbar-date" id="topbar-date"></span>
+  <!-- WEEK VIEW -->
+  <div class="page" id="page-week">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><h1>Week View</h1><p>Time-blocked schedule</p></div>
+      <button class="btn btn-primary" onclick="openEventModal()">+ Add Event</button>
+    </div>
+    <div class="week-nav">
+      <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← Prev</button>
+      <h2 id="week-label"></h2>
+      <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">Next →</button>
+      <button class="btn btn-secondary btn-sm" onclick="goToToday()">Today</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="week-grid-container"></div>
+    </div>
   </div>
 
-  <div class="content">
-
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <div id="dashboard-content"></div>
+  <!-- CALENDAR -->
+  <div class="page" id="page-calendar">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><h1>Calendar</h1><p>Monthly overview</p></div>
+      <button class="btn btn-primary" onclick="openEventModal()">+ Add Event</button>
     </div>
-
-    <!-- WEEK VIEW -->
-    <div class="page" id="page-week">
-      <div class="card">
-        <div class="week-nav">
-          <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">&#8592; Prev</button>
-          <h3 id="week-label"></h3>
-          <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">Next &#8594;</button>
-          <button class="btn btn-secondary btn-sm" onclick="goToCurrentWeek()">Today</button>
-        </div>
-        <div id="week-view-content"></div>
-      </div>
-      <div style="text-align:right; margin-top: -10px; margin-bottom: 16px;">
-        <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ Add Event</button>
-      </div>
+    <div class="cal-nav">
+      <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">← Prev</button>
+      <h2 id="cal-label"></h2>
+      <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">Next →</button>
+      <button class="btn btn-secondary btn-sm" onclick="goToTodayMonth()">Today</button>
     </div>
-
-    <!-- CALENDAR -->
-    <div class="page" id="page-calendar">
-      <div class="card">
-        <div class="cal-header">
-          <button class="btn btn-secondary btn-sm" onclick="changeMonth(-1)">&#8592;</button>
-          <h3 id="cal-month-label"></h3>
-          <button class="btn btn-secondary btn-sm" onclick="changeMonth(1)">&#8594;</button>
-        </div>
-        <div id="cal-grid-content"></div>
-      </div>
-      <div style="text-align:right; margin-top:-10px; margin-bottom:16px;">
-        <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ Add Event</button>
-      </div>
-      <div class="card" id="cal-day-detail" style="display:none;">
-        <div class="card-title" id="cal-day-detail-title"></div>
-        <div id="cal-day-detail-content"></div>
-      </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="cal-grid"></div>
     </div>
-
-    <!-- TASKS -->
-    <div class="page" id="page-tasks">
-      <div class="section-header">
-        <div></div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-warning btn-sm" onclick="rolloverTasks()">Roll Over Overdue</button>
-          <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add Task</button>
-        </div>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="task-search" placeholder="Search tasks..." oninput="renderTasks()">
-        <select id="task-filter-cat" onchange="renderTasks()">
-          <option value="">All Categories</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Health">Health</option>
-          <option value="Study / Course">Study / Course</option>
-          <option value="Others">Others</option>
-        </select>
-        <select id="task-filter-status" onchange="renderTasks()">
-          <option value="">All Statuses</option>
-          <option value="To Do">To Do</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Done">Done</option>
-          <option value="Rolled Over">Rolled Over</option>
-        </select>
-        <select id="task-filter-priority" onchange="renderTasks()">
-          <option value="">All Priorities</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-      </div>
-      <div id="tasks-list"></div>
+    <div class="day-detail card" style="margin-top:16px;display:none" id="day-detail-panel">
+      <div id="day-detail-content"></div>
     </div>
-
-    <!-- GANTT -->
-    <div class="page" id="page-gantt">
-      <div class="card">
-        <div class="section-header">
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button class="btn btn-secondary btn-sm" onclick="changeGanttWindow(-4)">&#8592; Earlier</button>
-            <button class="btn btn-secondary btn-sm" onclick="changeGanttWindow(4)">Later &#8594;</button>
-            <button class="btn btn-secondary btn-sm" onclick="resetGanttWindow()">Today</button>
-          </div>
-          <select id="gantt-filter-cat" onchange="renderGantt()" style="padding:6px 10px; border:1px solid var(--border); border-radius:7px; font-size:12px;">
-            <option value="">All Categories</option>
-            <option value="Work">Work</option>
-            <option value="Personal">Personal</option>
-            <option value="Health">Health</option>
-            <option value="Study / Course">Study / Course</option>
-            <option value="Others">Others</option>
-          </select>
-        </div>
-        <div class="gantt-container" id="gantt-content"></div>
-      </div>
-    </div>
-
-    <!-- DATA -->
-    <div class="page" id="page-data">
-      <div class="card">
-        <div class="data-section">
-          <h3>Export Data</h3>
-          <p>Download all your tasks and events as a JSON file. Use this to back up your data or transfer it to another device.</p>
-          <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
-        </div>
-        <div class="data-section">
-          <h3>Import Data</h3>
-          <p>Import a previously exported JSON file. This will merge with your existing data.</p>
-          <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none">
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
-        </div>
-        <div class="data-section">
-          <h3>Clear All Data</h3>
-          <p>Permanently delete all tasks and events. Singapore public holidays will be restored automatically. This cannot be undone.</p>
-          <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
-        </div>
-      </div>
-    </div>
-
   </div>
-</div>
+
+  <!-- TASKS -->
+  <div class="page" id="page-tasks">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><h1>Task List</h1><p>All tasks and to-dos</p></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="checkRollovers()">Check Rollovers</button>
+        <button class="btn btn-primary" onclick="openTaskModal()">+ Add Task</button>
+      </div>
+    </div>
+    <div class="filters">
+      <input type="text" id="task-search" placeholder="Search tasks..." oninput="renderTasks()">
+      <select id="task-filter-cat" onchange="renderTasks()">
+        <option value="">All Categories</option>
+        <option>Work</option><option>Personal</option><option>Health</option><option>Study</option><option>Others</option>
+      </select>
+      <select id="task-filter-status" onchange="renderTasks()">
+        <option value="">All Status</option>
+        <option>Todo</option><option>In Progress</option><option>Done</option><option>Rolled Over</option>
+      </select>
+      <select id="task-filter-pri" onchange="renderTasks()">
+        <option value="">All Priorities</option>
+        <option>High</option><option>Medium</option><option>Low</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="task-table">
+        <thead><tr>
+          <th style="width:36px"></th>
+          <th>Task</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Start</th>
+          <th>Due</th>
+          <th>Status</th>
+          <th style="width:80px"></th>
+        </tr></thead>
+        <tbody id="task-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- GANTT -->
+  <div class="page" id="page-gantt">
+    <div class="page-header">
+      <h1>Timeline</h1>
+      <p>Gantt view of all tasks</p>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary btn-sm" onclick="shiftGantt(-4)">← Earlier</button>
+      <button class="btn btn-secondary btn-sm" onclick="shiftGantt(4)">Later →</button>
+      <button class="btn btn-secondary btn-sm" onclick="resetGantt()">Reset to Today</button>
+      <select id="gantt-filter" onchange="renderGantt()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--surface)">
+        <option value="">All Categories</option>
+        <option>Work</option><option>Personal</option><option>Health</option><option>Study</option><option>Others</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="gantt-container" id="gantt-container"></div>
+    </div>
+  </div>
+
+  <!-- DATA -->
+  <div class="page" id="page-data">
+    <div class="page-header"><h1>Data & Backup</h1><p>Export, import, and manage your data</p></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Export</div>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Download all your tasks and events as a JSON backup file.</p>
+        <button class="btn btn-primary" onclick="exportData()">Export Data</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Import</div>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Import a previously exported JSON file. Existing data will be merged.</p>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn btn-primary" onclick="document.getElementById('import-file').click()">Import Data</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Storage Info</div>
+        <div id="storage-info" style="font-size:13px;color:var(--text-muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Danger Zone</div>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Permanently delete all tasks and events.</p>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+</main>
 
 <!-- EVENT MODAL -->
 <div class="modal-overlay" id="event-modal">
   <div class="modal">
-    <div class="modal-title" id="event-modal-title">Add Event</div>
-    <div class="form-group">
-      <label class="form-label">Title *</label>
-      <input class="form-control" id="ev-title" placeholder="Event title">
+    <div class="modal-header">
+      <h2 id="event-modal-title">Add Event</h2>
+      <button class="btn-icon" onclick="closeEventModal()">✕</button>
     </div>
     <div class="form-row cols-2">
-      <div class="form-group">
-        <label class="form-label">Category *</label>
-        <select class="form-control" id="ev-category">
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Health">Health</option>
-          <option value="Study / Course">Study / Course</option>
-          <option value="Holiday">Holiday</option>
-          <option value="Others">Others</option>
+      <div class="form-group" style="grid-column:1/-1"><label>Event Title *</label><input type="text" id="ev-title" placeholder="e.g. Team standup"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div class="form-group"><label>Category *</label>
+        <select id="ev-cat">
+          <option>Work</option><option>Personal</option><option>Health</option><option>Study</option><option>Others</option><option>Holiday</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Work Stream / Label</label>
-        <input class="form-control" id="ev-stream" placeholder="e.g. Project Alpha">
-      </div>
+      <div class="form-group"><label>Work Stream / Label</label><input type="text" id="ev-stream" placeholder="e.g. Project Alpha"></div>
     </div>
     <div class="form-row cols-2">
-      <div class="form-group">
-        <label class="form-label">Date *</label>
-        <input class="form-control" type="date" id="ev-date">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Date (optional)</label>
-        <input class="form-control" type="date" id="ev-end-date">
-      </div>
+      <div class="form-group"><label>Date *</label><input type="date" id="ev-date"></div>
+      <div class="form-group"><label>End Date (optional)</label><input type="date" id="ev-enddate"></div>
     </div>
     <div class="form-row cols-2">
-      <div class="form-group">
-        <label class="form-label">Start Time *</label>
-        <input class="form-control" type="time" id="ev-start-time">
+      <div class="form-group"><label>Start Time *</label><input type="time" id="ev-start"></div>
+      <div class="form-group"><label>End Time *</label><input type="time" id="ev-end"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div class="form-group"><label>Recurring</label>
+        <select id="ev-recur" onchange="toggleRecurEnd()">
+          <option value="">No recurrence</option>
+          <option value="weekly">Every week</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Every month</option>
+          <option value="yearly">Every year</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">End Time *</label>
-        <input class="form-control" type="time" id="ev-end-time">
-      </div>
+      <div class="form-group" id="recur-end-group" style="display:none"><label>Recurrence End Date</label><input type="date" id="ev-recur-end"></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Recurring</label>
-      <select class="form-control" id="ev-recurring">
-        <option value="none">No recurrence</option>
-        <option value="weekly">Every week</option>
-        <option value="monthly">Every month</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group"><label>Notes</label><textarea id="ev-notes" placeholder="Any notes..."></textarea></div>
     </div>
-    <div class="form-group" id="ev-recurring-end-group" style="display:none;">
-      <label class="form-label">Repeat Until</label>
-      <input class="form-control" type="date" id="ev-recurring-end">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notes</label>
-      <textarea class="form-control" id="ev-notes" rows="2" placeholder="Optional notes"></textarea>
-    </div>
+
+    <!-- Linked Tasks Section -->
+    <div class="form-section-title">Linked Tasks</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Tasks added here will appear in your main Task List, linked to this event.</p>
+    <div id="linked-tasks-list" class="linked-tasks-list"></div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addLinkedTaskRow()">+ Add Task</button>
+
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;margin-right:auto">Delete</button>
       <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
     </div>
   </div>
@@ -868,903 +443,914 @@
 <!-- TASK MODAL -->
 <div class="modal-overlay" id="task-modal">
   <div class="modal">
-    <div class="modal-title" id="task-modal-title">Add Task</div>
-    <div class="form-group">
-      <label class="form-label">Title *</label>
-      <input class="form-control" id="tk-title" placeholder="Task title">
+    <div class="modal-header">
+      <h2 id="task-modal-title">Add Task</h2>
+      <button class="btn-icon" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Task Title *</label><input type="text" id="tk-title" placeholder="e.g. Prepare report"></div>
     </div>
     <div class="form-row cols-2">
-      <div class="form-group">
-        <label class="form-label">Category *</label>
-        <select class="form-control" id="tk-category">
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Health">Health</option>
-          <option value="Study / Course">Study / Course</option>
-          <option value="Others">Others</option>
+      <div class="form-group"><label>Category *</label>
+        <select id="tk-cat">
+          <option>Work</option><option>Personal</option><option>Health</option><option>Study</option><option>Others</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Work Stream / Label</label>
-        <input class="form-control" id="tk-stream" placeholder="e.g. Project Alpha">
+      <div class="form-group"><label>Work Stream / Label</label><input type="text" id="tk-stream" placeholder="e.g. Project Alpha"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div class="form-group"><label>Priority</label>
+        <select id="tk-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="tk-status"><option>Todo</option><option>In Progress</option><option>Done</option></select>
       </div>
     </div>
-    <div class="form-row cols-3">
-      <div class="form-group">
-        <label class="form-label">Priority</label>
-        <select class="form-control" id="tk-priority">
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Low">Low</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Start Date</label>
-        <input class="form-control" type="date" id="tk-start-date">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Due Date</label>
-        <input class="form-control" type="date" id="tk-due-date">
-      </div>
+    <div class="form-row cols-2">
+      <div class="form-group"><label>Start Date</label><input type="date" id="tk-start"></div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="tk-due"></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Status</label>
-      <select class="form-control" id="tk-status">
-        <option value="To Do">To Do</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Done">Done</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notes</label>
-      <textarea class="form-control" id="tk-notes" rows="2" placeholder="Optional notes"></textarea>
+    <div class="form-row">
+      <div class="form-group"><label>Notes</label><textarea id="tk-notes" placeholder="Any notes..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="tk-delete-btn" onclick="deleteTask()" style="display:none;margin-right:auto">Delete</button>
       <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
     </div>
   </div>
 </div>
 
-<script>
-// ─── DATA STORE ────────────────────────────────────────────────────────────────
-let events = [];
-let tasks = [];
-let editingEventId = null;
-let editingTaskId = null;
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-// ─── SINGAPORE PUBLIC HOLIDAYS ────────────────────────────────────────────────
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
 const SG_HOLIDAYS = [
   // 2024
-  {date:'2024-01-01', name:"New Year's Day"},
-  {date:'2024-02-10', name:"Chinese New Year"},
-  {date:'2024-02-11', name:"Chinese New Year (Day 2)"},
-  {date:'2024-03-29', name:"Good Friday"},
-  {date:'2024-04-10', name:"Hari Raya Puasa"},
-  {date:'2024-05-01', name:"Labour Day"},
-  {date:'2024-05-22', name:"Vesak Day"},
-  {date:'2024-06-17', name:"Hari Raya Haji"},
-  {date:'2024-08-09', name:"National Day"},
-  {date:'2024-10-31', name:"Deepavali"},
-  {date:'2024-12-25', name:"Christmas Day"},
+  {id:'h1',title:"New Year's Day",date:'2024-01-01',cat:'Holiday',allDay:true},
+  {id:'h2',title:"Chinese New Year",date:'2024-02-10',cat:'Holiday',allDay:true},
+  {id:'h3',title:"Chinese New Year",date:'2024-02-11',cat:'Holiday',allDay:true},
+  {id:'h4',title:"Good Friday",date:'2024-03-29',cat:'Holiday',allDay:true},
+  {id:'h5',title:"Hari Raya Puasa",date:'2024-04-10',cat:'Holiday',allDay:true},
+  {id:'h6',title:"Labour Day",date:'2024-05-01',cat:'Holiday',allDay:true},
+  {id:'h7',title:"Vesak Day",date:'2024-05-23',cat:'Holiday',allDay:true},
+  {id:'h8',title:"Hari Raya Haji",date:'2024-06-17',cat:'Holiday',allDay:true},
+  {id:'h9',title:"National Day",date:'2024-08-09',cat:'Holiday',allDay:true},
+  {id:'h10',title:"Deepavali",date:'2024-10-31',cat:'Holiday',allDay:true},
+  {id:'h11',title:"Christmas Day",date:'2024-12-25',cat:'Holiday',allDay:true},
   // 2025
-  {date:'2025-01-01', name:"New Year's Day"},
-  {date:'2025-01-29', name:"Chinese New Year"},
-  {date:'2025-01-30', name:"Chinese New Year (Day 2)"},
-  {date:'2025-03-31', name:"Hari Raya Puasa"},
-  {date:'2025-04-18', name:"Good Friday"},
-  {date:'2025-05-01', name:"Labour Day"},
-  {date:'2025-05-12', name:"Vesak Day"},
-  {date:'2025-06-07', name:"Hari Raya Haji"},
-  {date:'2025-08-09', name:"National Day"},
-  {date:'2025-10-20', name:"Deepavali"},
-  {date:'2025-12-25', name:"Christmas Day"},
+  {id:'h12',title:"New Year's Day",date:'2025-01-01',cat:'Holiday',allDay:true},
+  {id:'h13',title:"Chinese New Year",date:'2025-01-29',cat:'Holiday',allDay:true},
+  {id:'h14',title:"Chinese New Year",date:'2025-01-30',cat:'Holiday',allDay:true},
+  {id:'h15',title:"Hari Raya Puasa",date:'2025-03-31',cat:'Holiday',allDay:true},
+  {id:'h16',title:"Good Friday",date:'2025-04-18',cat:'Holiday',allDay:true},
+  {id:'h17',title:"Labour Day",date:'2025-05-01',cat:'Holiday',allDay:true},
+  {id:'h18',title:"Vesak Day",date:'2025-05-12',cat:'Holiday',allDay:true},
+  {id:'h19',title:"Hari Raya Haji",date:'2025-06-07',cat:'Holiday',allDay:true},
+  {id:'h20',title:"National Day",date:'2025-08-09',cat:'Holiday',allDay:true},
+  {id:'h21',title:"Deepavali",date:'2025-10-20',cat:'Holiday',allDay:true},
+  {id:'h22',title:"Christmas Day",date:'2025-12-25',cat:'Holiday',allDay:true},
   // 2026
-  {date:'2026-01-01', name:"New Year's Day"},
-  {date:'2026-02-17', name:"Chinese New Year"},
-  {date:'2026-02-18', name:"Chinese New Year (Day 2)"},
-  {date:'2026-03-20', name:"Hari Raya Puasa"},
-  {date:'2026-04-03', name:"Good Friday"},
-  {date:'2026-05-01', name:"Labour Day"},
-  {date:'2026-05-31', name:"Vesak Day"},
-  {date:'2026-05-27', name:"Hari Raya Haji"},
-  {date:'2026-08-10', name:"National Day"},
-  {date:'2026-11-08', name:"Deepavali"},
-  {date:'2026-12-25', name:"Christmas Day"},
+  {id:'h23',title:"New Year's Day",date:'2026-01-01',cat:'Holiday',allDay:true},
+  {id:'h24',title:"Chinese New Year",date:'2026-02-17',cat:'Holiday',allDay:true},
+  {id:'h25',title:"Chinese New Year",date:'2026-02-18',cat:'Holiday',allDay:true},
+  {id:'h26',title:"Hari Raya Puasa",date:'2026-03-20',cat:'Holiday',allDay:true},
+  {id:'h27',title:"Good Friday",date:'2026-04-03',cat:'Holiday',allDay:true},
+  {id:'h28',title:"Labour Day",date:'2026-05-01',cat:'Holiday',allDay:true},
+  {id:'h29',title:"Vesak Day",date:'2026-05-31',cat:'Holiday',allDay:true},
+  {id:'h30',title:"Hari Raya Haji",date:'2026-05-27',cat:'Holiday',allDay:true},
+  {id:'h31',title:"National Day",date:'2026-08-10',cat:'Holiday',allDay:true},
+  {id:'h32',title:"Deepavali",date:'2026-11-09',cat:'Holiday',allDay:true},
+  {id:'h33',title:"Christmas Day",date:'2026-12-25',cat:'Holiday',allDay:true},
 ];
 
-function seedHolidays() {
-  const existing = events.filter(e => e.isHoliday).map(e => e.date);
-  SG_HOLIDAYS.forEach(h => {
-    if (!existing.includes(h.date)) {
-      events.push({
-        id: 'holiday-' + h.date,
-        title: h.name,
-        category: 'Holiday',
-        stream: '',
-        date: h.date,
-        endDate: '',
-        startTime: '',
-        endTime: '',
-        notes: 'Singapore Public Holiday',
-        isHoliday: true,
-        recurring: 'none',
-        recurringEnd: ''
-      });
-    }
-  });
-}
-
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-function saveData() {
-  localStorage.setItem('planner_events', JSON.stringify(events));
-  localStorage.setItem('planner_tasks', JSON.stringify(tasks));
-}
-
 function loadData() {
-  const e = localStorage.getItem('planner_events');
-  const t = localStorage.getItem('planner_tasks');
-  events = e ? JSON.parse(e) : [];
-  tasks = t ? JSON.parse(t) : [];
-  seedHolidays();
-  saveData();
-}
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-
-function formatDate(str) {
-  if (!str) return '';
-  const [y,m,d] = str.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
-}
-
-function formatTime(t) {
-  if (!t) return '';
-  const [h, m] = t.split(':');
-  const hr = parseInt(h);
-  return `${hr > 12 ? hr-12 : hr === 0 ? 12 : hr}:${m}${hr >= 12 ? 'pm' : 'am'}`;
-}
-
-function getCatColor(cat) {
-  const map = {
-    'Work': '#4a7c9e', 'Personal': '#9e6b4a', 'Health': '#6b9e4a',
-    'Others': '#7c4a9e', 'Holiday': '#9e4a6b', 'Study / Course': '#4a6b9e'
+  return {
+    events: JSON.parse(localStorage.getItem('planner_events') || '[]'),
+    tasks: JSON.parse(localStorage.getItem('planner_tasks') || '[]')
   };
-  return map[cat] || '#888';
 }
-
-function getCatClass(cat) {
-  const map = {
-    'Work': 'work', 'Personal': 'personal', 'Health': 'health',
-    'Others': 'others', 'Holiday': 'holiday', 'Study / Course': 'study'
-  };
-  return map[cat] || 'others';
+function saveData(data) {
+  localStorage.setItem('planner_events', JSON.stringify(data.events));
+  localStorage.setItem('planner_tasks', JSON.stringify(data.tasks));
 }
+function uid() { return '_' + Math.random().toString(36).substr(2,9); }
 
-function isOverdue(task) {
-  if (!task.dueDate || task.status === 'Done') return false;
-  return task.dueDate < todayStr();
-}
-
-// ─── NAVIGATION ───────────────────────────────────────────────────────────────
-const pageTitles = {
-  dashboard: 'Dashboard', week: 'Week View', calendar: 'Calendar',
-  tasks: 'Tasks', gantt: 'Gantt Timeline', data: 'Data & Backup'
-};
-
-function showPage(id) {
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes(name)) n.classList.add('active');
   });
-  document.getElementById('page-title').textContent = pageTitles[id] || id;
-
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'week') renderWeekView();
-  if (id === 'calendar') renderCalendar();
-  if (id === 'tasks') renderTasks();
-  if (id === 'gantt') renderGantt();
+  if(name==='dashboard') renderDashboard();
+  if(name==='week') renderWeek();
+  if(name==='calendar') renderCalendar();
+  if(name==='tasks') renderTasks();
+  if(name==='gantt') renderGantt();
+  if(name==='data') renderStorageInfo();
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function renderDashboard() {
-  const today = todayStr();
-  const todayEvents = getEventsForDate(today).filter(e => !e.isHoliday);
-  const todayHoliday = getEventsForDate(today).find(e => e.isHoliday);
-  const pendingTasks = tasks.filter(t => t.status !== 'Done');
-  const overdueTasks = tasks.filter(t => isOverdue(t));
-  const doneTasks = tasks.filter(t => t.status === 'Done');
-  const totalTasks = tasks.length;
+// ============================================================
+// HELPERS
+// ============================================================
+const CAT_COLORS = {Work:'#4a7fa5',Personal:'#7a9e7e',Health:'#c17f5a',Others:'#9b7db6',Study:'#d4a843',Holiday:'#b85c5c'};
+function catColor(c) { return CAT_COLORS[c] || '#888'; }
+function fmtDate(d) { if(!d) return ''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTime(t) { if(!t) return ''; const [h,m]=t.split(':'); const ap=+h>=12?'pm':'am'; return ((+h%12)||12)+':'+m+ap; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
 
-  // Category breakdown
-  const cats = ['Work','Personal','Health','Study / Course','Others'];
-  const catCounts = {};
-  cats.forEach(c => catCounts[c] = tasks.filter(t => t.category === c && t.status !== 'Done').length);
-
-  const now = new Date();
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
-
-  let html = `
-    <div style="margin-bottom:24px;">
-      <h2 style="font-size:20px; font-weight:600;">${greeting}</h2>
-      <p style="color:var(--text-muted); font-size:13px; margin-top:4px;">${new Date().toLocaleDateString('en-SG', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}${todayHoliday ? ` &mdash; <span style="color:var(--holiday); font-weight:500;">${todayHoliday.title}</span>` : ''}</p>
-    </div>
-
-    <div class="grid-3" style="margin-bottom:20px;">
-      <div class="stat-card">
-        <div class="stat-number">${pendingTasks.length}</div>
-        <div class="stat-label">Pending Tasks</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--danger)">${overdueTasks.length}</div>
-        <div class="stat-label">Overdue</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number" style="color:var(--success)">${totalTasks > 0 ? Math.round(doneTasks.length/totalTasks*100) : 0}%</div>
-        <div class="stat-label">Completion Rate</div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">Today's Schedule</div>
-        ${todayEvents.length === 0 ? '<div class="empty-state" style="padding:16px;">No events today</div>' : 
-          todayEvents.sort((a,b) => (a.startTime||'').localeCompare(b.startTime||'')).map(e => `
-            <div class="today-event-item">
-              <span class="event-time-badge">${formatTime(e.startTime)}${e.endTime ? ' – ' + formatTime(e.endTime) : ''}</span>
-              <div>
-                <div style="font-size:13px; font-weight:500;">${e.title}</div>
-                <div style="margin-top:3px;"><span class="badge badge-${getCatClass(e.category)}">${e.category}</span>${e.stream ? `<span style="font-size:11px; color:var(--text-muted); margin-left:6px;">${e.stream}</span>` : ''}</div>
-              </div>
-            </div>`).join('')}
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-          Pending Tasks
-          <button class="btn btn-primary btn-sm" onclick="showPage('tasks')">View All</button>
-        </div>
-        ${pendingTasks.length === 0 ? '<div class="empty-state" style="padding:16px;">All tasks complete!</div>' :
-          pendingTasks.slice(0,6).map(t => `
-            <div class="task-item-dash">
-              <div class="task-check ${t.status==='Done'?'checked':''}" onclick="quickDoneTask('${t.id}')">
-                ${t.status==='Done' ? '&#10003;' : ''}
-              </div>
-              <div style="flex:1;">
-                <div style="font-size:13px;">${t.title}${t.stream ? `<span style="font-size:11px; color:var(--text-muted); margin-left:6px;">${t.stream}</span>` : ''}</div>
-                <div style="margin-top:3px; display:flex; gap:5px; flex-wrap:wrap;">
-                  <span class="badge badge-${getCatClass(t.category)}">${t.category}</span>
-                  <span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>
-                  ${t.dueDate ? `<span style="font-size:11px; color:${isOverdue(t)?'var(--danger)':'var(--text-muted)'};">${isOverdue(t)?'Overdue: ':'Due: '}${formatDate(t.dueDate)}</span>` : ''}
-                </div>
-              </div>
-            </div>`).join('')}
-        ${pendingTasks.length > 6 ? `<div style="text-align:center; margin-top:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('tasks')">+${pendingTasks.length-6} more</button></div>` : ''}
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:0;">
-      <div class="card-title">Active Tasks by Category</div>
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:16px;">
-        ${cats.map(c => `
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span style="font-size:12px; color:var(--text-secondary);">${c}</span>
-              <span style="font-size:12px; font-weight:600; color:${getCatColor(c)};">${catCounts[c]}</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" style="width:${pendingTasks.length > 0 ? Math.round(catCounts[c]/pendingTasks.length*100) : 0}%; background:${getCatColor(c)};"></div>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-
-  document.getElementById('dashboard-content').innerHTML = html;
-}
-
-function quickDoneTask(id) {
-  const t = tasks.find(t => t.id === id);
-  if (t) { t.status = t.status === 'Done' ? 'To Do' : 'Done'; saveData(); renderDashboard(); }
-}
-
-// ─── EVENTS ───────────────────────────────────────────────────────────────────
-function getEventsForDate(dateStr) {
+// Expand recurring events for a date range
+function getEventsForRange(startDate, endDate) {
+  const data = loadData();
   const result = [];
-  events.forEach(e => {
-    if (e.date === dateStr) { result.push(e); return; }
-    // Multi-day
-    if (e.endDate && e.date <= dateStr && e.endDate >= dateStr) { result.push(e); return; }
-    // Recurring
-    if (e.recurring === 'weekly') {
-      const start = new Date(e.date + 'T00:00:00');
-      const check = new Date(dateStr + 'T00:00:00');
-      const end = e.recurringEnd ? new Date(e.recurringEnd + 'T00:00:00') : new Date('2027-12-31');
-      if (check > start && check <= end) {
-        const diff = (check - start) / (7*24*3600*1000);
-        if (Number.isInteger(diff)) result.push({...e, date: dateStr});
+  const allEvents = [...data.events, ...SG_HOLIDAYS];
+  const sd = new Date(startDate), ed = new Date(endDate);
+
+  allEvents.forEach(ev => {
+    if(ev.allDay || !ev.recur) {
+      // Non-recurring or all-day
+      const evDate = new Date(ev.date+'T00:00:00');
+      if(evDate >= sd && evDate <= ed) result.push({...ev, instanceDate: ev.date});
+      // Multi-day
+      if(ev.endDate) {
+        let cur = new Date(ev.date+'T00:00:00');
+        const end = new Date(ev.endDate+'T00:00:00');
+        cur.setDate(cur.getDate()+1);
+        while(cur <= end && cur <= ed) {
+          if(cur >= sd) result.push({...ev, instanceDate: cur.toISOString().split('T')[0]});
+          cur.setDate(cur.getDate()+1);
+        }
       }
-    }
-    if (e.recurring === 'monthly') {
-      const start = new Date(e.date + 'T00:00:00');
-      const check = new Date(dateStr + 'T00:00:00');
-      const end = e.recurringEnd ? new Date(e.recurringEnd + 'T00:00:00') : new Date('2027-12-31');
-      if (check > start && check <= end) {
-        if (start.getDate() === check.getDate()) result.push({...e, date: dateStr});
+    } else {
+      // Recurring
+      let cur = new Date(ev.date+'T00:00:00');
+      const recurEnd = ev.recurEnd ? new Date(ev.recurEnd+'T00:00:00') : new Date('2030-12-31');
+      let safetyCount = 0;
+      while(cur <= ed && cur <= recurEnd && safetyCount < 500) {
+        safetyCount++;
+        if(cur >= sd) result.push({...ev, instanceDate: cur.toISOString().split('T')[0]});
+        if(ev.recur==='weekly') cur.setDate(cur.getDate()+7);
+        else if(ev.recur==='biweekly') cur.setDate(cur.getDate()+14);
+        else if(ev.recur==='monthly') cur.setMonth(cur.getMonth()+1);
+        else if(ev.recur==='yearly') cur.setFullYear(cur.getFullYear()+1);
+        else break;
       }
     }
   });
   return result;
 }
 
-// ─── WEEK VIEW ────────────────────────────────────────────────────────────────
-let weekOffset = 0;
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('dash-greeting').textContent = greet;
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-function getWeekStart(offset) {
-  const d = new Date();
-  d.setHours(0,0,0,0);
-  const day = d.getDay();
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-  d.setDate(d.getDate() + offset * 7);
-  return d;
+  const data = loadData();
+  const today = todayStr();
+  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate()+7);
+  const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+  const todayEvents = getEventsForRange(today, today);
+  const overdueTasks = data.tasks.filter(t => t.due && t.due < today && t.status !== 'Done');
+  const todayTasks = data.tasks.filter(t => t.due === today && t.status !== 'Done');
+  const weekTasks = data.tasks.filter(t => t.due && t.due > today && t.due <= weekEndStr && t.status !== 'Done');
+
+  document.getElementById('stat-today').textContent = todayTasks.length;
+  document.getElementById('stat-overdue').textContent = overdueTasks.length;
+  document.getElementById('stat-week').textContent = weekTasks.length;
+
+  // Today events
+  const evEl = document.getElementById('dash-events');
+  if(todayEvents.length===0) evEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">No events today</p>';
+  else evEl.innerHTML = todayEvents.slice(0,5).map(ev=>`
+    <div class="task-item-dash">
+      <span class="cat-dot" style="background:${catColor(ev.cat)};margin-top:4px"></span>
+      <div>
+        <div class="task-title">${ev.title}</div>
+        <div class="task-meta">${ev.startTime ? fmtTime(ev.startTime)+' – '+fmtTime(ev.endTime) : 'All day'}${ev.stream?' · '+ev.stream:''}</div>
+      </div>
+    </div>`).join('');
+
+  // Open tasks
+  const tkEl = document.getElementById('dash-tasks');
+  const openTasks = [...overdueTasks, ...todayTasks, ...weekTasks].slice(0,8);
+  if(openTasks.length===0) tkEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">No open tasks</p>';
+  else tkEl.innerHTML = openTasks.map(t=>`
+    <div class="task-item-dash">
+      <span class="cat-dot" style="background:${catColor(t.cat)};margin-top:4px"></span>
+      <div>
+        <div class="task-title">${t.title}${t.linkedEvent?' <span class="event-link">'+t.linkedEvent+'</span>':''}</div>
+        <div class="task-meta">${t.due ? 'Due '+fmtDate(t.due) : 'No due date'} · <span class="pri-${t.priority}">${t.priority}</span>${t.originalDue?' · Rolled from '+fmtDate(t.originalDue):''}</div>
+      </div>
+    </div>`).join('');
+
+  // Breakdown
+  const cats = ['Work','Personal','Health','Study','Others'];
+  const total = data.tasks.filter(t=>t.status!=='Done').length || 1;
+  document.getElementById('dash-breakdown').innerHTML = cats.map(c=>{
+    const count = data.tasks.filter(t=>t.cat===c && t.status!=='Done').length;
+    const pct = Math.round(count/total*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:${catColor(c)};font-weight:500">${c}</span>
+        <span style="color:var(--text-muted)">${count} tasks</span>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:6px">
+        <div style="background:${catColor(c)};width:${pct}%;height:100%;border-radius:4px;transition:width 0.3s"></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function changeWeek(dir) { weekOffset += dir; renderWeekView(); }
-function goToCurrentWeek() { weekOffset = 0; renderWeekView(); }
+// ============================================================
+// WEEK VIEW
+// ============================================================
+let weekOffset = 0;
+function getWeekStart(offset) {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day===0?-6:1); // Monday
+  d.setDate(diff + offset*7);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function changeWeek(d) { weekOffset += d; renderWeek(); }
+function goToToday() { weekOffset = 0; renderWeek(); }
 
-function renderWeekView() {
-  const weekStart = getWeekStart(weekOffset);
+function renderWeek() {
+  const ws = getWeekStart(weekOffset);
+  const we = new Date(ws); we.setDate(we.getDate()+6);
+  const wsStr = ws.toISOString().split('T')[0];
+  const weStr = we.toISOString().split('T')[0];
+
   const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    days.push(d);
-  }
+  for(let i=0;i<7;i++) { const d=new Date(ws); d.setDate(d.getDate()+i); days.push(d); }
+  document.getElementById('week-label').textContent =
+    ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + we.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+  const events = getEventsForRange(wsStr, weStr);
   const today = todayStr();
-  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-
-  const startLabel = days[0].toLocaleDateString('en-SG', {day:'numeric', month:'short'});
-  const endLabel = days[6].toLocaleDateString('en-SG', {day:'numeric', month:'short', year:'numeric'});
-  document.getElementById('week-label').textContent = `${startLabel} – ${endLabel}`;
-
   const hours = [];
-  for (let h = 7; h <= 22; h++) hours.push(h);
+  for(let h=7;h<=22;h++) hours.push(h);
 
-  const toDateStr = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html = '<div style="overflow-x:auto"><div class="week-grid" style="min-width:700px">';
 
-  let html = `<div class="week-grid">
-    <div class="week-day-header" style="background:var(--bg);"></div>
-    ${days.map((d, i) => {
-      const ds = toDateStr(d);
-      const isToday = ds === today;
-      return `<div class="week-day-header ${isToday?'today-col':''}">
-        <span>${d.getDate()}</span>${dayNames[i]}
-      </div>`;
-    }).join('')}`;
+  // Header row
+  html += '<div class="week-header" style="background:var(--bg);border-bottom:1px solid var(--border)"></div>';
+  days.forEach((d,i)=>{
+    const ds = d.toISOString().split('T')[0];
+    const isTd = ds===today;
+    html += `<div class="week-header${isTd?' today-col':''}">
+      ${DAYS[i]}<span class="day-num">${d.getDate()}</span>
+    </div>`;
+  });
 
-  hours.forEach(h => {
-    const timeLabel = h > 12 ? `${h-12}pm` : h === 12 ? '12pm' : `${h}am`;
-    html += `<div class="week-time-label">${timeLabel}</div>`;
-    days.forEach(d => {
-      const ds = toDateStr(d);
-      const isToday = ds === today;
-      const dayEvents = getEventsForDate(ds).filter(e => e.startTime);
-      const hourEvents = dayEvents.filter(e => parseInt(e.startTime.split(':')[0]) === h);
-      let evHtml = '';
-      hourEvents.forEach(e => {
-        const startMin = parseInt(e.startTime.split(':')[1]);
-        const endH = e.endTime ? parseInt(e.endTime.split(':')[0]) : h+1;
-        const endMin = e.endTime ? parseInt(e.endTime.split(':')[1]) : 0;
-        const topPct = (startMin / 60) * 100;
-        const durationH = (endH + endMin/60) - (h + startMin/60);
-        const heightPct = Math.max(durationH * 100, 20);
-        evHtml += `<div class="week-event-block" 
-          style="top:${topPct}%; height:${heightPct}%; background:${getCatColor(e.category)};"
-          title="${e.title} ${formatTime(e.startTime)}-${formatTime(e.endTime)}"
-          onclick="editEventById('${e.id}')">
-          ${e.title}
+  // All-day row
+  html += '<div class="time-col allday-row" style="font-size:10px;color:var(--text-muted);justify-content:center;align-items:center;height:auto;min-height:28px">All day</div>';
+  days.forEach(d=>{
+    const ds = d.toISOString().split('T')[0];
+    const dayAllDay = events.filter(e=>(e.allDay||!e.startTime) && e.instanceDate===ds);
+    html += '<div class="allday-cell">';
+    dayAllDay.forEach(e=>{
+      html += `<div class="allday-event" style="background:${catColor(e.cat)}">${e.title}</div>`;
+    });
+    html += '</div>';
+  });
+
+  // Time rows
+  hours.forEach(h=>{
+    const hStr = h.toString().padStart(2,'0')+':00';
+    const hDisp = (h>12?h-12:h)+(h>=12?'pm':'am');
+    html += `<div class="time-col">${hDisp}</div>`;
+    days.forEach(d=>{
+      const ds = d.toISOString().split('T')[0];
+      // Find events starting in this hour
+      const hourEvents = events.filter(e=>{
+        if(!e.startTime || e.allDay) return false;
+        if(e.instanceDate !== ds) return false;
+        const evH = parseInt(e.startTime.split(':')[0]);
+        return evH === h;
+      });
+      html += `<div class="day-cell" data-date="${ds}" data-hour="${h}">`;
+      hourEvents.forEach(e=>{
+        const startH = parseInt(e.startTime.split(':')[0]);
+        const startM = parseInt(e.startTime.split(':')[1]);
+        const endH = e.endTime ? parseInt(e.endTime.split(':')[0]) : startH+1;
+        const endM = e.endTime ? parseInt(e.endTime.split(':')[1]) : 0;
+        const duration = ((endH*60+endM)-(startH*60+startM))/60;
+        const heightPx = Math.max(duration*48, 24);
+        const topOffset = (startM/60)*48;
+        html += `<div class="event-block" style="background:${catColor(e.cat)};height:${heightPx}px;top:${topOffset}px"
+          onclick="editEventInstance('${e.id}','${e.instanceDate}',event)">
+          <div class="ev-title">${e.title}</div>
+          ${e.stream?'<div class="ev-stream">'+e.stream+'</div>':''}
+          <div class="ev-time">${fmtTime(e.startTime)}${e.endTime?' – '+fmtTime(e.endTime):''}</div>
         </div>`;
       });
-      // All-day / holiday events
-      const allDayEvs = getEventsForDate(ds).filter(e => !e.startTime && h === 7);
-      if (allDayEvs.length > 0 && h === 7) {
-        allDayEvs.forEach(e => {
-          evHtml += `<div class="week-event-block" style="top:0; height:90%; background:${getCatColor(e.category)}; opacity:0.7;" title="${e.title}">${e.title}</div>`;
-        });
-      }
-      html += `<div class="week-cell ${isToday?'today-col':''}">${evHtml}</div>`;
+      html += '</div>';
     });
   });
 
-  html += '</div>';
-  document.getElementById('week-view-content').innerHTML = html;
+  html += '</div></div>';
+  document.getElementById('week-grid-container').innerHTML = html;
 }
 
-// ─── CALENDAR ─────────────────────────────────────────────────────────────────
+// ============================================================
+// CALENDAR
+// ============================================================
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
-
-function changeMonth(dir) {
-  calMonth += dir;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  renderCalendar();
-}
+function changeMonth(d) { calMonth+=d; if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function goToTodayMonth() { calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCalendar(); }
 
 function renderCalendar() {
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-label').textContent = MONTHS[calMonth]+' '+calYear;
+  const data = loadData();
   const today = todayStr();
   const firstDay = new Date(calYear, calMonth, 1);
   const lastDay = new Date(calYear, calMonth+1, 0);
-  let startDow = firstDay.getDay();
-  if (startDow === 0) startDow = 7;
+  const startPad = (firstDay.getDay()+6)%7;
+  const totalCells = Math.ceil((startPad+lastDay.getDate())/7)*7;
 
-  let html = `<div class="cal-grid">
-    ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-day-header">${d}</div>`).join('')}`;
+  // Get all events for this month view
+  const rangeStart = new Date(calYear, calMonth, 1-startPad).toISOString().split('T')[0];
+  const rangeEnd = new Date(calYear, calMonth, lastDay.getDate()+(totalCells-startPad-lastDay.getDate())).toISOString().split('T')[0];
+  const monthEvents = getEventsForRange(rangeStart, rangeEnd);
 
-  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
-  for (let i = startDow - 1; i > 0; i--) {
-    const d = prevMonthDays - i + 1;
-    const ds = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  const DAYS_HDR = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html = '<div class="cal-grid">';
+  DAYS_HDR.forEach(d=>{ html+=`<div class="cal-header">${d}</div>`; });
+
+  for(let i=0;i<totalCells;i++) {
+    const cellDate = new Date(calYear, calMonth, 1-startPad+i);
+    const ds = cellDate.toISOString().split('T')[0];
+    const isToday = ds===today;
+    const isOther = cellDate.getMonth()!==calMonth;
+    const dayEvents = monthEvents.filter(e=>e.instanceDate===ds);
+    const dayTasks = data.tasks.filter(t=>t.due===ds && t.status!=='Done');
+
+    html += `<div class="cal-day${isOther?' other-month':''}${isToday?' today':''}" onclick="showDayDetail('${ds}')">
+      <div class="day-num">${cellDate.getDate()}</div>`;
+    dayEvents.slice(0,3).forEach(e=>{
+      html += `<span class="cal-event-pill" style="background:${catColor(e.cat)}">${e.title}</span>`;
+    });
+    if(dayEvents.length>3) html+=`<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>`;
+    if(dayTasks.length>0) html+=`<div class="cal-task-count">${dayTasks.length} task${dayTasks.length>1?'s':''}</div>`;
+    html += '</div>';
   }
-
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = ds === today;
-    const dayEvs = getEventsForDate(ds);
-    const dayTasks = tasks.filter(t => t.dueDate === ds || t.startDate === ds);
-    html += `<div class="cal-day ${isToday?'today':''}" onclick="showCalDayDetail('${ds}')">
-      <div class="cal-day-num">${d}</div>
-      ${dayEvs.slice(0,3).map(e => `<div class="cal-event-dot" style="background:${getCatColor(e.category)};" title="${e.title}">${e.title}</div>`).join('')}
-      ${dayEvs.length > 3 ? `<div style="font-size:10px; color:var(--text-muted);">+${dayEvs.length-3} more</div>` : ''}
-      ${dayTasks.length > 0 ? `<div class="cal-task-count">${dayTasks.length} task${dayTasks.length>1?'s':''}</div>` : ''}
-    </div>`;
-  }
-
-  const totalCells = startDow - 1 + lastDay.getDate();
-  const remaining = Math.ceil(totalCells / 7) * 7 - totalCells;
-  for (let d = 1; d <= remaining; d++) {
-    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
-  }
-
   html += '</div>';
-  document.getElementById('cal-grid-content').innerHTML = html;
-  document.getElementById('cal-day-detail').style.display = 'none';
+  document.getElementById('cal-grid').innerHTML = html;
 }
 
-function showCalDayDetail(dateStr) {
-  const dayEvs = getEventsForDate(dateStr).sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
-  const dayTasks = tasks.filter(t => t.dueDate === dateStr || t.startDate === dateStr);
-  const detail = document.getElementById('cal-day-detail');
-  document.getElementById('cal-day-detail-title').textContent = formatDate(dateStr);
-  
-  let html = '';
-  if (dayEvs.length === 0 && dayTasks.length === 0) {
-    html = '<div class="empty-state" style="padding:16px;">Nothing scheduled</div>';
-  }
-  if (dayEvs.length > 0) {
-    html += `<div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Events</div>`;
-    html += dayEvs.map(e => `
-      <div class="today-event-item">
-        <span class="event-time-badge">${e.startTime ? formatTime(e.startTime) + (e.endTime ? ' – '+formatTime(e.endTime) : '') : 'All day'}</span>
-        <div style="flex:1;">
-          <div style="font-size:13px; font-weight:500;">${e.title}${e.recurring !== 'none' ? '<span class="recurring-badge" style="margin-left:6px;">Recurring</span>' : ''}</div>
-          <span class="badge badge-${getCatClass(e.category)}">${e.category}</span>
-          ${e.stream ? `<span style="font-size:11px; color:var(--text-muted); margin-left:6px;">${e.stream}</span>` : ''}
+function showDayDetail(ds) {
+  const panel = document.getElementById('day-detail-panel');
+  const data = loadData();
+  const dayEvents = getEventsForRange(ds, ds);
+  const dayTasks = data.tasks.filter(t=>t.due===ds);
+  const dt = new Date(ds+'T00:00:00');
+  const label = dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  let html = `<div class="day-detail-title">${label}</div>`;
+  if(dayEvents.length>0) {
+    html += '<div style="margin-bottom:12px"><div class="card-title">Events</div>';
+    dayEvents.forEach(e=>{
+      html += `<div class="detail-event" style="background:${catColor(e.cat)}">
+        <div class="ev-info">
+          <div class="ev-name">${e.title}${e.recur?'<span class="rec-badge">Recurring</span>':''}</div>
+          <div class="ev-meta">${e.startTime?fmtTime(e.startTime)+' – '+fmtTime(e.endTime):'All day'}${e.stream?' · '+e.stream:''}</div>
         </div>
-        ${!e.isHoliday ? `<button class="btn btn-secondary btn-sm" onclick="editEventById('${e.id}')">Edit</button>` : ''}
-      </div>`).join('');
+        ${e.cat!=='Holiday'?`<button class="btn-icon" style="color:rgba(255,255,255,0.8)" onclick="editEventInstance('${e.id}','${e.instanceDate}',event)">Edit</button>`:''}
+      </div>`;
+    });
+    html += '</div>';
   }
-  if (dayTasks.length > 0) {
-    html += `<div style="font-size:12px; font-weight:600; color:var(--text-muted); margin:12px 0 8px; text-transform:uppercase; letter-spacing:0.5px;">Tasks</div>`;
-    html += dayTasks.map(t => `
-      <div class="task-item-dash">
-        <div class="task-check ${t.status==='Done'?'checked':''}" onclick="quickDoneTask('${t.id}'); showCalDayDetail('${dateStr}');">${t.status==='Done'?'&#10003;':''}</div>
-        <div style="flex:1; font-size:13px;">${t.title}</div>
-        <span class="badge badge-${getCatClass(t.category)}">${t.category}</span>
-        <span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>
-      </div>`).join('');
-  }
-  detail.querySelector('#cal-day-detail-content').innerHTML = html;
-  detail.style.display = 'block';
-}
-
-// ─── TASKS ────────────────────────────────────────────────────────────────────
-function renderTasks() {
-  const search = (document.getElementById('task-search')?.value || '').toLowerCase();
-  const catF = document.getElementById('task-filter-cat')?.value || '';
-  const statusF = document.getElementById('task-filter-status')?.value || '';
-  const prioF = document.getElementById('task-filter-priority')?.value || '';
-
-  let filtered = tasks.filter(t => {
-    if (search && !t.title.toLowerCase().includes(search) && !(t.notes||'').toLowerCase().includes(search) && !(t.stream||'').toLowerCase().includes(search)) return false;
-    if (catF && t.category !== catF) return false;
-    if (statusF && t.status !== statusF) return false;
-    if (prioF && t.priority !== prioF) return false;
-    return true;
-  });
-
-  // Sort: overdue first, then by due date, done last
-  filtered.sort((a,b) => {
-    if (a.status === 'Done' && b.status !== 'Done') return 1;
-    if (b.status === 'Done' && a.status !== 'Done') return -1;
-    if (isOverdue(a) && !isOverdue(b)) return -1;
-    if (!isOverdue(a) && isOverdue(b)) return 1;
-    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-    if (a.dueDate) return -1;
-    if (b.dueDate) return 1;
-    return 0;
-  });
-
-  if (filtered.length === 0) {
-    document.getElementById('tasks-list').innerHTML = '<div class="empty-state">No tasks found. Add one above!</div>';
-    return;
-  }
-
-  document.getElementById('tasks-list').innerHTML = filtered.map(t => `
-    <div class="task-row ${t.status==='Done'?'done-row':''}">
-      <div class="task-check ${t.status==='Done'?'checked':''}" onclick="toggleTaskDone('${t.id}')">
-        ${t.status==='Done' ? '&#10003;' : ''}
-      </div>
-      <div class="task-title-col">
-        <div style="font-weight:500; ${t.status==='Done'?'text-decoration:line-through; color:var(--text-muted);':''}">${t.title}</div>
-        ${t.stream ? `<div style="font-size:11px; color:var(--text-muted); margin-top:1px;">${t.stream}</div>` : ''}
-        ${t.status === 'Rolled Over' && t.originalDueDate ? `<div class="rollover-note">Originally due: ${formatDate(t.originalDueDate)}</div>` : ''}
-        ${t.notes ? `<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${t.notes}</div>` : ''}
-      </div>
-      <div class="task-meta">
-        <span class="badge badge-${getCatClass(t.category)}">${t.category}</span>
-        <span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>
-        <span class="badge badge-${t.status.toLowerCase().replace(' ','').replace('/','')}">${t.status}</span>
-        ${t.startDate ? `<span style="font-size:11px; color:var(--text-muted);">Start: ${formatDate(t.startDate)}</span>` : ''}
-        ${t.dueDate ? `<span style="font-size:11px; color:${isOverdue(t)?'var(--danger)':'var(--text-muted)'};">${isOverdue(t)?'Overdue':'Due'}: ${formatDate(t.dueDate)}</span>` : ''}
-      </div>
-      <div style="display:flex; gap:6px; flex-shrink:0;">
-        <button class="btn btn-secondary btn-sm" onclick="openTaskModal('${t.id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Delete</button>
-      </div>
-    </div>`).join('');
-}
-
-function toggleTaskDone(id) {
-  const t = tasks.find(t => t.id === id);
-  if (t) { t.status = t.status === 'Done' ? 'To Do' : 'Done'; saveData(); renderTasks(); }
-}
-
-function rolloverTasks() {
-  const today = todayStr();
-  let count = 0;
-  tasks.forEach(t => {
-    if (t.dueDate && t.dueDate < today && t.status !== 'Done') {
-      if (t.status !== 'Rolled Over') t.originalDueDate = t.dueDate;
-      t.dueDate = today;
-      t.status = 'Rolled Over';
-      count++;
-    }
-  });
-  saveData();
-  renderTasks();
-  if (count > 0) alert(`${count} task${count>1?'s':''} rolled over to today.`);
-  else alert('No overdue tasks to roll over.');
-}
-
-function deleteTask(id) {
-  if (confirm('Delete this task?')) {
-    tasks = tasks.filter(t => t.id !== id);
-    saveData(); renderTasks();
-  }
-}
-
-// ─── GANTT ────────────────────────────────────────────────────────────────────
-let ganttOffset = 0;
-
-function changeGanttWindow(weeks) { ganttOffset += weeks; renderGantt(); }
-function resetGanttWindow() { ganttOffset = 0; renderGantt(); }
-
-function renderGantt() {
-  const catF = document.getElementById('gantt-filter-cat')?.value || '';
-  const numWeeks = 10;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const windowStart = new Date(today);
-  windowStart.setDate(windowStart.getDate() - 7 + ganttOffset * 7);
-  const windowEnd = new Date(windowStart);
-  windowEnd.setDate(windowEnd.getDate() + numWeeks * 7);
-
-  const totalDays = numWeeks * 7;
-
-  let filtered = tasks.filter(t => {
-    if (catF && t.category !== catF) return false;
-    if (!t.startDate && !t.dueDate) return false;
-    const start = t.startDate ? new Date(t.startDate + 'T00:00:00') : new Date(t.dueDate + 'T00:00:00');
-    const end = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : start;
-    return start <= windowEnd && end >= windowStart;
-  });
-
-  // Week labels
-  const weeks = [];
-  for (let w = 0; w < numWeeks; w++) {
-    const d = new Date(windowStart);
-    d.setDate(d.getDate() + w * 7);
-    weeks.push(d.toLocaleDateString('en-SG', {day:'numeric', month:'short'}));
-  }
-
-  // Today line position
-  const todayOffset = (today - windowStart) / (1000*3600*24);
-  const todayPct = Math.max(0, Math.min(100, (todayOffset / totalDays) * 100));
-
-  let html = `<table class="gantt-table">
-    <thead>
-      <tr>
-        <th style="width:22%;">Task</th>
-        <th style="width:10%;">Category</th>
-        <th style="width:8%;">Priority</th>
-        <th style="width:8%;">Status</th>
-        <th class="gantt-bar-cell">
-          <div class="gantt-timeline-header">
-            ${weeks.map(w => `<div class="gantt-week-label">${w}</div>`).join('')}
-          </div>
-        </th>
-      </tr>
-    </thead>
-    <tbody>`;
-
-  if (filtered.length === 0) {
-    html += `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">No tasks with dates in this window</td></tr>`;
-  } else {
-    filtered.forEach(t => {
-      const start = t.startDate ? new Date(t.startDate + 'T00:00:00') : new Date(t.dueDate + 'T00:00:00');
-      const end = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : start;
-      const startOffset = Math.max(0, (start - windowStart) / (1000*3600*24));
-      const endOffset = Math.min(totalDays, (end - windowStart) / (1000*3600*24) + 1);
-      const leftPct = (startOffset / totalDays) * 100;
-      const widthPct = Math.max(0.5, ((endOffset - startOffset) / totalDays) * 100);
-      const color = getCatColor(t.category);
-
-      html += `<tr>
-        <td style="font-size:12.5px; font-weight:500;">${t.title}</td>
-        <td><span class="badge badge-${getCatClass(t.category)}">${t.category}</span></td>
-        <td><span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span></td>
-        <td><span class="badge badge-${t.status.toLowerCase().replace(' ','')}">${t.status}</span></td>
-        <td class="gantt-bar-cell">
-          <div class="gantt-bar-wrapper">
-            <div class="gantt-today-line" style="left:${todayPct}%;"></div>
-            <div class="gantt-bar" style="left:${leftPct}%; width:${widthPct}%; background:${color};"
-              title="${t.title}: ${t.startDate ? formatDate(t.startDate) : ''} → ${t.dueDate ? formatDate(t.dueDate) : ''}">
-            </div>
-          </div>
-        </td>
-      </tr>`;
+  if(dayTasks.length>0) {
+    html += '<div class="card-title">Tasks Due</div>';
+    dayTasks.forEach(t=>{
+      html += `<div class="task-item-dash">
+        <span class="cat-dot" style="background:${catColor(t.cat)};margin-top:4px"></span>
+        <div><div class="task-title">${t.title}</div>
+        <div class="task-meta"><span class="pri-${t.priority}">${t.priority}</span> · ${t.status}</div></div>
+      </div>`;
     });
   }
+  if(dayEvents.length===0 && dayTasks.length===0) html += '<p style="color:var(--text-muted);font-size:13px">Nothing scheduled for this day.</p>';
 
-  html += '</tbody></table>';
-  document.getElementById('gantt-content').innerHTML = html;
+  document.getElementById('day-detail-content').innerHTML = html;
+  panel.style.display = 'block';
 }
 
-// ─── EVENT MODAL ──────────────────────────────────────────────────────────────
-function openEventModal(id) {
-  editingEventId = id || null;
-  const modal = document.getElementById('event-modal');
-  document.getElementById('event-modal-title').textContent = id ? 'Edit Event' : 'Add Event';
-  
-  if (id) {
-    const e = events.find(e => e.id === id);
-    if (e) {
-      document.getElementById('ev-title').value = e.title;
-      document.getElementById('ev-category').value = e.category;
-      document.getElementById('ev-stream').value = e.stream || '';
-      document.getElementById('ev-date').value = e.date;
-      document.getElementById('ev-end-date').value = e.endDate || '';
-      document.getElementById('ev-start-time').value = e.startTime || '';
-      document.getElementById('ev-end-time').value = e.endTime || '';
-      document.getElementById('ev-recurring').value = e.recurring || 'none';
-      document.getElementById('ev-recurring-end').value = e.recurringEnd || '';
-      document.getElementById('ev-notes').value = e.notes || '';
-      toggleRecurringEnd();
-    }
-  } else {
-    document.getElementById('ev-title').value = '';
-    document.getElementById('ev-category').value = 'Work';
-    document.getElementById('ev-stream').value = '';
-    document.getElementById('ev-date').value = todayStr();
-    document.getElementById('ev-end-date').value = '';
-    document.getElementById('ev-start-time').value = '';
-    document.getElementById('ev-end-time').value = '';
-    document.getElementById('ev-recurring').value = 'none';
-    document.getElementById('ev-recurring-end').value = '';
-    document.getElementById('ev-notes').value = '';
-    document.getElementById('ev-recurring-end-group').style.display = 'none';
-  }
-  modal.classList.add('open');
-}
+// ============================================================
+// EVENT MODAL
+// ============================================================
+let editingEventId = null;
+let editingInstanceDate = null;
 
-function editEventById(id) {
-  const e = events.find(ev => ev.id === id);
-  if (e && !e.isHoliday) openEventModal(id);
-}
-
-function toggleRecurringEnd() {
-  const val = document.getElementById('ev-recurring').value;
-  document.getElementById('ev-recurring-end-group').style.display = val !== 'none' ? 'block' : 'none';
-}
-
-document.getElementById('ev-recurring').addEventListener('change', toggleRecurringEnd);
-
-function closeEventModal() {
-  document.getElementById('event-modal').classList.remove('open');
+function openEventModal(prefillDate) {
   editingEventId = null;
+  editingInstanceDate = null;
+  document.getElementById('event-modal-title').textContent = 'Add Event';
+  document.getElementById('ev-delete-btn').style.display = 'none';
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-cat').value = 'Work';
+  document.getElementById('ev-stream').value = '';
+  document.getElementById('ev-date').value = prefillDate || todayStr();
+  document.getElementById('ev-enddate').value = '';
+  document.getElementById('ev-start').value = '';
+  document.getElementById('ev-end').value = '';
+  document.getElementById('ev-recur').value = '';
+  document.getElementById('ev-recur-end').value = '';
+  document.getElementById('ev-notes').value = '';
+  document.getElementById('recur-end-group').style.display = 'none';
+  document.getElementById('linked-tasks-list').innerHTML = '';
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function editEventInstance(id, instanceDate, e) {
+  if(e) e.stopPropagation();
+  const data = loadData();
+  const ev = data.events.find(x=>x.id===id);
+  if(!ev) return;
+  editingEventId = id;
+  editingInstanceDate = instanceDate;
+  document.getElementById('event-modal-title').textContent = ev.recur ? 'Edit Recurring Event' : 'Edit Event';
+  document.getElementById('ev-delete-btn').style.display = 'inline-block';
+  document.getElementById('ev-title').value = ev.title;
+  document.getElementById('ev-cat').value = ev.cat;
+  document.getElementById('ev-stream').value = ev.stream || '';
+  document.getElementById('ev-date').value = ev.date;
+  document.getElementById('ev-enddate').value = ev.endDate || '';
+  document.getElementById('ev-start').value = ev.startTime || '';
+  document.getElementById('ev-end').value = ev.endTime || '';
+  document.getElementById('ev-recur').value = ev.recur || '';
+  document.getElementById('ev-recur-end').value = ev.recurEnd || '';
+  document.getElementById('ev-notes').value = ev.notes || '';
+  document.getElementById('recur-end-group').style.display = ev.recur ? 'flex' : 'none';
+
+  // Load linked tasks
+  const linked = data.tasks.filter(t=>t.linkedEventId===id);
+  const listEl = document.getElementById('linked-tasks-list');
+  listEl.innerHTML = '';
+  linked.forEach(t=>addLinkedTaskRow(t));
+
+  document.getElementById('event-modal').classList.add('open');
+}
+
+function closeEventModal() { document.getElementById('event-modal').classList.remove('open'); }
+
+function toggleRecurEnd() {
+  const v = document.getElementById('ev-recur').value;
+  document.getElementById('recur-end-group').style.display = v ? 'flex' : 'none';
+}
+
+function addLinkedTaskRow(task) {
+  const listEl = document.getElementById('linked-tasks-list');
+  const row = document.createElement('div');
+  row.className = 'linked-task-row';
+  row.dataset.taskId = task ? task.id : '';
+  row.innerHTML = `
+    <input type="text" placeholder="Task title" value="${task?task.title:''}" class="lt-title" style="flex:1">
+    <select class="lt-cat">
+      ${['Work','Personal','Health','Study','Others'].map(c=>`<option${task&&task.cat===c?' selected':''}>${c}</option>`).join('')}
+    </select>
+    <select class="lt-pri">
+      ${['High','Medium','Low'].map(p=>`<option${task&&task.priority===p?' selected':''}>${p}</option>`).join('')}
+    </select>
+    <input type="date" class="lt-due" value="${task?task.due||'':''}" placeholder="Due date">
+    <button class="btn-icon" onclick="this.parentElement.remove()">✕</button>`;
+  listEl.appendChild(row);
 }
 
 function saveEvent() {
   const title = document.getElementById('ev-title').value.trim();
   const date = document.getElementById('ev-date').value;
-  if (!title || !date) { alert('Please fill in title and date.'); return; }
+  if(!title || !date) { showToast('Please fill in title and date'); return; }
 
-  const ev = {
+  const data = loadData();
+  const evObj = {
     id: editingEventId || uid(),
     title,
-    category: document.getElementById('ev-category').value,
+    cat: document.getElementById('ev-cat').value,
     stream: document.getElementById('ev-stream').value.trim(),
     date,
-    endDate: document.getElementById('ev-end-date').value,
-    startTime: document.getElementById('ev-start-time').value,
-    endTime: document.getElementById('ev-end-time').value,
-    recurring: document.getElementById('ev-recurring').value,
-    recurringEnd: document.getElementById('ev-recurring-end').value,
+    endDate: document.getElementById('ev-enddate').value || null,
+    startTime: document.getElementById('ev-start').value || null,
+    endTime: document.getElementById('ev-end').value || null,
+    recur: document.getElementById('ev-recur').value || null,
+    recurEnd: document.getElementById('ev-recur-end').value || null,
     notes: document.getElementById('ev-notes').value.trim(),
-    isHoliday: false
   };
 
-  if (editingEventId) {
-    const idx = events.findIndex(e => e.id === editingEventId);
-    if (idx !== -1) events[idx] = ev;
+  if(editingEventId) {
+    const idx = data.events.findIndex(e=>e.id===editingEventId);
+    if(idx>-1) data.events[idx] = evObj;
   } else {
-    events.push(ev);
+    data.events.push(evObj);
   }
 
-  saveData();
+  // Handle linked tasks
+  const rows = document.querySelectorAll('#linked-tasks-list .linked-task-row');
+  const existingLinkedIds = new Set();
+  rows.forEach(row=>{
+    const taskId = row.dataset.taskId;
+    const ltTitle = row.querySelector('.lt-title').value.trim();
+    if(!ltTitle) return;
+    const ltCat = row.querySelector('.lt-cat').value;
+    const ltPri = row.querySelector('.lt-pri').value;
+    const ltDue = row.querySelector('.lt-due').value;
+
+    if(taskId) {
+      // Update existing
+      const tIdx = data.tasks.findIndex(t=>t.id===taskId);
+      if(tIdx>-1) {
+        data.tasks[tIdx].title = ltTitle;
+        data.tasks[tIdx].cat = ltCat;
+        data.tasks[tIdx].priority = ltPri;
+        data.tasks[tIdx].due = ltDue || null;
+        existingLinkedIds.add(taskId);
+      }
+    } else {
+      // Create new
+      const newTask = {
+        id: uid(), title: ltTitle, cat: ltCat, priority: ltPri,
+        status: 'Todo', due: ltDue || null, start: null, notes: '',
+        linkedEventId: evObj.id, linkedEvent: evObj.title
+      };
+      data.tasks.push(newTask);
+    }
+  });
+
+  saveData(data);
   closeEventModal();
-  const active = document.querySelector('.page.active');
-  if (active.id === 'page-calendar') renderCalendar();
-  if (active.id === 'page-week') renderWeekView();
-  if (active.id === 'page-dashboard') renderDashboard();
+  showToast('Event saved');
+  const activePage = document.querySelector('.page.active').id.replace('page-','');
+  if(activePage==='week') renderWeek();
+  if(activePage==='calendar') renderCalendar();
+  if(activePage==='dashboard') renderDashboard();
 }
 
-// ─── TASK MODAL ───────────────────────────────────────────────────────────────
+function deleteEvent() {
+  if(!editingEventId) return;
+  const isRecurring = document.getElementById('ev-recur').value;
+  if(isRecurring && editingInstanceDate) {
+    const choice = confirm(
+      'This is a recurring event.
+
+OK = Delete only this occurrence
+Cancel = Delete all occurrences'
+    );
+    const data = loadData();
+    if(choice) {
+      // Add exception date
+      const ev = data.events.find(e=>e.id===editingEventId);
+      if(ev) {
+        ev.exceptions = ev.exceptions || [];
+        ev.exceptions.push(editingInstanceDate);
+      }
+    } else {
+      data.events = data.events.filter(e=>e.id!==editingEventId);
+    }
+    saveData(data);
+  } else {
+    const data = loadData();
+    data.events = data.events.filter(e=>e.id!==editingEventId);
+    saveData(data);
+  }
+  closeEventModal();
+  showToast('Event deleted');
+  const activePage = document.querySelector('.page.active').id.replace('page-','');
+  if(activePage==='week') renderWeek();
+  if(activePage==='calendar') renderCalendar();
+}
+
+// ============================================================
+// TASKS
+// ============================================================
+let editingTaskId = null;
+
 function openTaskModal(id) {
   editingTaskId = id || null;
-  document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Add Task';
-
-  if (id) {
-    const t = tasks.find(t => t.id === id);
-    if (t) {
-      document.getElementById('tk-title').value = t.title;
-      document.getElementById('tk-category').value = t.category;
-      document.getElementById('tk-stream').value = t.stream || '';
-      document.getElementById('tk-priority').value = t.priority;
-      document.getElementById('tk-start-date').value = t.startDate || '';
-      document.getElementById('tk-due-date').value = t.dueDate || '';
-      document.getElementById('tk-status').value = t.status;
-      document.getElementById('tk-notes').value = t.notes || '';
-    }
-  } else {
-    document.getElementById('tk-title').value = '';
-    document.getElementById('tk-category').value = 'Work';
-    document.getElementById('tk-stream').value = '';
-    document.getElementById('tk-priority').value = 'Medium';
-    document.getElementById('tk-start-date').value = '';
-    document.getElementById('tk-due-date').value = '';
-    document.getElementById('tk-status').value = 'To Do';
-    document.getElementById('tk-notes').value = '';
-  }
+  const data = loadData();
+  const t = id ? data.tasks.find(x=>x.id===id) : null;
+  document.getElementById('task-modal-title').textContent = t ? 'Edit Task' : 'Add Task';
+  document.getElementById('tk-delete-btn').style.display = t ? 'inline-block' : 'none';
+  document.getElementById('tk-title').value = t ? t.title : '';
+  document.getElementById('tk-cat').value = t ? t.cat : 'Work';
+  document.getElementById('tk-stream').value = t ? (t.stream||t.linkedEvent||'') : '';
+  document.getElementById('tk-priority').value = t ? t.priority : 'Medium';
+  document.getElementById('tk-status').value = t ? t.status : 'Todo';
+  document.getElementById('tk-start').value = t ? (t.start||'') : '';
+  document.getElementById('tk-due').value = t ? (t.due||'') : '';
+  document.getElementById('tk-notes').value = t ? (t.notes||'') : '';
   document.getElementById('task-modal').classList.add('open');
 }
-
-function closeTaskModal() {
-  document.getElementById('task-modal').classList.remove('open');
-  editingTaskId = null;
-}
+function closeTaskModal() { document.getElementById('task-modal').classList.remove('open'); }
 
 function saveTask() {
   const title = document.getElementById('tk-title').value.trim();
-  if (!title) { alert('Please enter a task title.'); return; }
-
-  const task = {
+  if(!title) { showToast('Please enter a task title'); return; }
+  const data = loadData();
+  const tObj = {
     id: editingTaskId || uid(),
     title,
-    category: document.getElementById('tk-category').value,
+    cat: document.getElementById('tk-cat').value,
     stream: document.getElementById('tk-stream').value.trim(),
     priority: document.getElementById('tk-priority').value,
-    startDate: document.getElementById('tk-start-date').value,
-    dueDate: document.getElementById('tk-due-date').value,
     status: document.getElementById('tk-status').value,
+    start: document.getElementById('tk-start').value || null,
+    due: document.getElementById('tk-due').value || null,
     notes: document.getElementById('tk-notes').value.trim(),
+    linkedEventId: editingTaskId ? (data.tasks.find(t=>t.id===editingTaskId)||{}).linkedEventId : null,
+    linkedEvent: editingTaskId ? (data.tasks.find(t=>t.id===editingTaskId)||{}).linkedEvent : null,
+    originalDue: editingTaskId ? (data.tasks.find(t=>t.id===editingTaskId)||{}).originalDue : null,
   };
-
-  if (editingTaskId) {
-    const idx = tasks.findIndex(t => t.id === editingTaskId);
-    if (idx !== -1) {
-      task.originalDueDate = tasks[idx].originalDueDate;
-      tasks[idx] = task;
-    }
+  if(editingTaskId) {
+    const idx = data.tasks.findIndex(t=>t.id===editingTaskId);
+    if(idx>-1) data.tasks[idx] = tObj;
   } else {
-    tasks.push(task);
+    data.tasks.push(tObj);
+  }
+  saveData(data);
+  closeTaskModal();
+  renderTasks();
+  showToast('Task saved');
+}
+
+function deleteTask() {
+  if(!editingTaskId) return;
+  const data = loadData();
+  data.tasks = data.tasks.filter(t=>t.id!==editingTaskId);
+  saveData(data);
+  closeTaskModal();
+  renderTasks();
+  showToast('Task deleted');
+}
+
+function markDone(id) {
+  const data = loadData();
+  const t = data.tasks.find(x=>x.id===id);
+  if(t) t.status = t.status==='Done' ? 'Todo' : 'Done';
+  saveData(data);
+  renderTasks();
+}
+
+function checkRollovers() {
+  const data = loadData();
+  const today = todayStr();
+  let count = 0;
+  data.tasks.forEach(t=>{
+    if(t.due && t.due < today && t.status !== 'Done' && t.status !== 'Rolled Over') {
+      t.originalDue = t.originalDue || t.due;
+      t.due = today;
+      t.status = 'Rolled Over';
+      count++;
+    }
+  });
+  saveData(data);
+  renderTasks();
+  showToast(count>0 ? count+' task(s) rolled over to today' : 'No tasks to roll over');
+}
+
+function renderTasks() {
+  const data = loadData();
+  const search = (document.getElementById('task-search')||{}).value||'';
+  const fCat = (document.getElementById('task-filter-cat')||{}).value||'';
+  const fStatus = (document.getElementById('task-filter-status')||{}).value||'';
+  const fPri = (document.getElementById('task-filter-pri')||{}).value||'';
+
+  let tasks = data.tasks.filter(t=>{
+    if(search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if(fCat && t.cat!==fCat) return false;
+    if(fStatus && t.status!==fStatus) return false;
+    if(fPri && t.priority!==fPri) return false;
+    return true;
+  });
+
+  // Sort: overdue first, then by due date
+  const today = todayStr();
+  tasks.sort((a,b)=>{
+    const aOver = a.due && a.due<today && a.status!=='Done';
+    const bOver = b.due && b.due<today && b.status!=='Done';
+    if(aOver && !bOver) return -1;
+    if(!aOver && bOver) return 1;
+    if(a.due && b.due) return a.due.localeCompare(b.due);
+    if(a.due) return -1; if(b.due) return 1;
+    return 0;
+  });
+
+  const tbody = document.getElementById('task-tbody');
+  if(tasks.length===0) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><p>No tasks found</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = tasks.map(t=>`
+    <tr>
+      <td><input type="checkbox" ${t.status==='Done'?'checked':''} onchange="markDone('${t.id}')" style="cursor:pointer"></td>
+      <td>
+        <div style="font-weight:500;${t.status==='Done'?'text-decoration:line-through;color:var(--text-muted)':''}">${t.title}</div>
+        ${t.linkedEvent?`<div><span class="event-link">${t.linkedEvent}</span></div>`:''}
+        ${t.stream&&!t.linkedEvent?`<div style="font-size:11px;color:var(--text-muted)">${t.stream}</div>`:''}
+        ${t.notes?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${t.notes}</div>`:''}
+      </td>
+      <td><span class="cat-badge badge-${t.cat}">${t.cat}</span></td>
+      <td><span class="pri-${t.priority}">${t.priority}</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${t.start?fmtDate(t.start):'-'}</td>
+      <td style="font-size:12px">
+        ${t.due?`<span style="color:${t.due<today&&t.status!=='Done'?'#c05050':'inherit'}">${fmtDate(t.due)}</span>`:'-'}
+        ${t.originalDue?`<div class="original-due" style="font-size:10px;color:var(--text-muted);text-decoration:line-through">was ${fmtDate(t.originalDue)}</div>`:''}
+      </td>
+      <td><span class="status-badge status-${t.status.replace(' ','-')}">${t.status}</span></td>
+      <td>
+        <div class="task-actions">
+          <button class="btn-icon btn-sm" onclick="openTaskModal('${t.id}')" title="Edit">✎</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// GANTT
+// ============================================================
+let ganttStartOffset = 0;
+function shiftGantt(w) { ganttStartOffset += w; renderGantt(); }
+function resetGantt() { ganttStartOffset = 0; renderGantt(); }
+
+function renderGantt() {
+  const data = loadData();
+  const fCat = (document.getElementById('gantt-filter')||{}).value||'';
+  let tasks = data.tasks.filter(t=>t.status!=='Done' && (t.start||t.due));
+  if(fCat) tasks = tasks.filter(t=>t.cat===fCat);
+
+  const NUM_WEEKS = 12;
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() + ganttStartOffset*7);
+  baseDate.setDate(baseDate.getDate() - baseDate.getDay() + 1); // Monday
+  baseDate.setHours(0,0,0,0);
+
+  const endDate = new Date(baseDate);
+  endDate.setDate(endDate.getDate() + NUM_WEEKS*7 - 1);
+
+  const totalDays = NUM_WEEKS*7;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayOffset = Math.floor((today-baseDate)/(1000*60*60*24));
+
+  // Build week headers
+  const weeks = [];
+  for(let w=0;w<NUM_WEEKS;w++) {
+    const wd = new Date(baseDate); wd.setDate(wd.getDate()+w*7);
+    weeks.push(wd.toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
   }
 
-  saveData();
-  closeTaskModal();
-  const active = document.querySelector('.page.active');
-  if (active.id === 'page-tasks') renderTasks();
-  if (active.id === 'page-dashboard') renderDashboard();
-  if (active.id === 'page-gantt') renderGantt();
+  let html = '<table class="gantt-table" style="min-width:900px">';
+  html += '<thead><tr><th style="width:220px">Task</th><th style="width:80px">Category</th>';
+  weeks.forEach(w=>{ html+=`<th colspan="1" style="width:${Math.floor(600/NUM_WEEKS)}px;font-size:10px;text-align:center">${w}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  if(tasks.length===0) {
+    html += '<tr><td colspan="'+(2+NUM_WEEKS)+'" style="padding:32px;text-align:center;color:var(--text-muted)">No active tasks with dates</td></tr>';
+  } else {
+    tasks.forEach(t=>{
+      const startD = t.start ? new Date(t.start+'T00:00:00') : new Date(t.due+'T00:00:00');
+      const endD = t.due ? new Date(t.due+'T00:00:00') : startD;
+      const startOff = Math.floor((startD-baseDate)/(1000*60*60*24));
+      const endOff = Math.floor((endD-baseDate)/(1000*60*60*24));
+      const barStart = Math.max(0, startOff);
+      const barEnd = Math.min(totalDays-1, endOff);
+      const barWidth = Math.max(1, barEnd-barStart+1);
+      const barLeft = barStart/totalDays*100;
+      const barW = barWidth/totalDays*100;
+      const todayPct = todayOffset/totalDays*100;
+
+      html += `<tr>
+        <td style="font-size:12px;font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.title}">
+          ${t.title}
+          ${t.linkedEvent?`<span class="event-link">${t.linkedEvent}</span>`:''}
+        </td>
+        <td><span class="cat-badge badge-${t.cat}" style="font-size:10px">${t.cat}</span></td>
+        <td colspan="${NUM_WEEKS}" style="padding:0">
+          <div class="gantt-bar-cell" style="position:relative">
+            ${todayOffset>=0&&todayOffset<totalDays?`<div class="gantt-today" style="left:${todayPct}%"></div>`:''}
+            ${barStart<=totalDays&&barEnd>=0?`<div class="gantt-bar" style="left:${barLeft}%;width:${barW}%;background:${catColor(t.cat)}">${barWidth>5?t.title:''}</div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    });
+  }
+  html += '</tbody></table>';
+  document.getElementById('gantt-container').innerHTML = html;
 }
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
+// ============================================================
+// DATA PAGE
+// ============================================================
+function renderStorageInfo() {
+  const data = loadData();
+  document.getElementById('storage-info').innerHTML = `
+    <p>Events stored: <strong>${data.events.length}</strong></p>
+    <p style="margin-top:6px">Tasks stored: <strong>${data.tasks.length}</strong></p>
+    <p style="margin-top:6px;font-size:11px;color:var(--text-light)">Singapore public holidays are built-in and not counted above.</p>`;
+}
+
 function exportData() {
-  const data = { events: events.filter(e => !e.isHoliday), tasks };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `planner-backup-${todayStr()}.json`;
-  a.click();
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'planner-backup-'+todayStr()+'.json'; a.click();
+  showToast('Data exported');
 }
 
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function importData(e) {
+  const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = function(ev) {
     try {
-      const data = JSON.parse(e.target.result);
-      if (data.events) {
-        data.events.forEach(ev => { if (!events.find(e => e.id === ev.id)) events.push(ev); });
-      }
-      if (data.tasks) {
-        data.tasks.forEach(t => { if (!tasks.find(tk => tk.id === t.id)) tasks.push(t); });
-      }
-      saveData();
-      alert('Data imported successfully!');
-      renderDashboard();
-    } catch(err) { alert('Invalid file format.'); }
+      const imported = JSON.parse(ev.target.result);
+      const data = loadData();
+      if(imported.events) data.events = [...data.events, ...imported.events.filter(ie=>!data.events.find(e=>e.id===ie.id))];
+      if(imported.tasks) data.tasks = [...data.tasks, ...imported.tasks.filter(it=>!data.tasks.find(t=>t.id===it.id))];
+      saveData(data);
+      renderStorageInfo();
+      showToast('Data imported successfully');
+    } catch(err) { showToast('Import failed: invalid file'); }
   };
   reader.readAsText(file);
 }
 
 function clearAllData() {
-  if (confirm('This will delete ALL your tasks and events. Are you sure?')) {
-    events = []; tasks = [];
-    seedHolidays();
-    saveData();
-    alert('Data cleared. Singapore public holidays restored.');
-    renderDashboard();
+  if(confirm('This will permanently delete all your tasks and events. Are you sure?')) {
+    localStorage.removeItem('planner_events');
+    localStorage.removeItem('planner_tasks');
+    renderStorageInfo();
+    showToast('All data cleared');
   }
 }
 
-// Close modals on overlay click
-document.getElementById('event-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeEventModal(); });
-document.getElementById('task-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTaskModal(); });
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-function init() {
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-SG', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
-  document.getElementById('sidebar-date').textContent = dateStr;
-  document.getElementById('topbar-date').textContent = dateStr;
-  loadData();
-  renderDashboard();
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-init();
+// ============================================================
+// RECURRING EXCEPTION SUPPORT IN getEventsForRange
+// ============================================================
+// Patch getEventsForRange to respect exception dates
+const _origGetEvents = getEventsForRange;
+// Already handled inline above with ev.exceptions check — patching here:
+const origGetEventsForRange = getEventsForRange;
+window.getEventsForRange = function(startDate, endDate) {
+  const data = loadData();
+  const result = [];
+  const allEvents = [...data.events, ...SG_HOLIDAYS];
+  const sd = new Date(startDate+'T00:00:00'), ed = new Date(endDate+'T00:00:00');
+
+  allEvents.forEach(ev => {
+    const exceptions = ev.exceptions || [];
+    if(ev.allDay || !ev.recur) {
+      const evDate = new Date(ev.date+'T00:00:00');
+      if(evDate >= sd && evDate <= ed && !exceptions.includes(ev.date))
+        result.push({...ev, instanceDate: ev.date});
+    } else {
+      let cur = new Date(ev.date+'T00:00:00');
+      const recurEnd = ev.recurEnd ? new Date(ev.recurEnd+'T00:00:00') : new Date('2030-12-31');
+      let safetyCount = 0;
+      while(cur <= ed && cur <= recurEnd && safetyCount < 500) {
+        safetyCount++;
+        const ds = cur.toISOString().split('T')[0];
+        if(cur >= sd && !exceptions.includes(ds))
+          result.push({...ev, instanceDate: ds});
+        if(ev.recur==='weekly') cur.setDate(cur.getDate()+7);
+        else if(ev.recur==='biweekly') cur.setDate(cur.getDate()+14);
+        else if(ev.recur==='monthly') cur.setMonth(cur.getMonth()+1);
+        else if(ev.recur==='yearly') cur.setFullYear(cur.getFullYear()+1);
+        else break;
+      }
+    }
+  });
+  return result;
+};
+
+// ============================================================
+// INIT
+// ============================================================
+renderDashboard();
 </script>
 </body>
 </html>
